@@ -1,10 +1,35 @@
 local c = vim.cmd
 local d = vim.diagnostic
 local l = vim.lsp
+local v = vim.v
 local foldmarker
 local M = {}
 
---- Create new fold by Ctrl-clicking the range
+-- Return line number in configured format.
+function M.lnumfunc(number, relativenumber, thousands, relculright)
+	if v.wrap or (not relativenumber and not number) then return "" end
+	local lnum = v.lnum
+
+	if relativenumber then
+		lnum = v.relnum > 0 and v.relnum or (number and lnum or 0)
+	end
+
+	if thousands and lnum > 999 then
+		lnum = string.reverse(lnum):gsub("%d%d%d", "%1"..thousands):reverse():gsub("^%"..thousands, "")
+	end
+
+	if not relculright then
+		if relativenumber then
+			lnum = (v.relnum > 0 and "%=" or "")..lnum..(v.relnum > 0 and "" or "%=")
+		else
+			lnum = "%="..lnum
+		end
+	end
+
+	return lnum
+end
+
+--- Create new fold by Ctrl-clicking the range.
 local function create_fold(args)
 	if foldmarker then
 		c("norm! zf"..foldmarker.."G")
@@ -31,21 +56,22 @@ local function fold_click(args, open, empty)
 	end
 end
 
---- Handler for clicking '+' in fold column
+--- Handler for clicking '+' in fold column.
 function M.foldplus_click(args)
 	fold_click(args, true)
 end
 
---- Handler for clicking '-' in fold column
+--- Handler for clicking '-' in fold column.
 function M.foldminus_click(args)
 	fold_click(args, false)
 end
 
---- Handler for clicking ' ' in fold column
+--- Handler for clicking ' ' in fold column.
 function M.foldempty_click(args)
 	fold_click(args, false, true)
 end
 
+--- Handler for clicking a Diagnostc* sign.
 function M.diagnostic_click(args)
 	if args.button == "l" then
 		d.open_float()       -- Open diagnostic float on left click
@@ -54,6 +80,7 @@ function M.diagnostic_click(args)
 	end
 end
 
+--- Handler for clicking a GitSigns* sign.
 function M.gitsigns_click(args)
 	if args.button == "l" then
 		require("gitsigns").preview_hunk()
@@ -64,6 +91,7 @@ function M.gitsigns_click(args)
 	end
 end
 
+--- Toggle a (conditional) DAP breakpoint.
 function M.toggle_breakpoint(args)
 	local dap = vim.F.npcall(require, "dap")
 	if not dap then return end
@@ -76,20 +104,18 @@ function M.toggle_breakpoint(args)
 	end
 end
 
---- Handler for clicking the line number
+--- Handler for clicking the line number.
 function M.lnum_click(args)
 	if args.button == "l" then
 		-- Toggle DAP (conditional) breakpoint on (Ctrl-)left click
 		M.toggle_breakpoint(args)
 	elseif args.button == "m" then
-		if args.clicks == 2 then
-			c("norm! p")   -- Paste on double middle click
-		else
-			c("norm! yy")  -- Yank/Delete on middle click
-		end
+		c("norm! yy")  -- Yank on middle click
 	elseif args.button == "r" then
 		if args.clicks == 2 then
 			c("norm! dd")  -- Cut on double right click
+		else
+			c("norm! p")   -- Paste on right click
 		end
 	end
 end

@@ -57,22 +57,22 @@ local function fold_click(args, open, empty)
 end
 
 --- Handler for clicking '+' in fold column.
-function M.foldplus_click(args)
+local function foldplus_click(args)
 	fold_click(args, true)
 end
 
 --- Handler for clicking '-' in fold column.
-function M.foldminus_click(args)
+local function foldminus_click(args)
 	fold_click(args, false)
 end
 
 --- Handler for clicking ' ' in fold column.
-function M.foldempty_click(args)
+local function foldempty_click(args)
 	fold_click(args, false, true)
 end
 
 --- Handler for clicking a Diagnostc* sign.
-function M.diagnostic_click(args)
+local function diagnostic_click(args)
 	if args.button == "l" then
 		d.open_float()       -- Open diagnostic float on left click
 	elseif args.button == "m" then
@@ -81,7 +81,7 @@ function M.diagnostic_click(args)
 end
 
 --- Handler for clicking a GitSigns* sign.
-function M.gitsigns_click(args)
+local function gitsigns_click(args)
 	if args.button == "l" then
 		require("gitsigns").preview_hunk()
 	elseif args.button == "m" then
@@ -92,7 +92,7 @@ function M.gitsigns_click(args)
 end
 
 --- Toggle a (conditional) DAP breakpoint.
-function M.toggle_breakpoint(args)
+local function toggle_breakpoint(args)
 	local dap = vim.F.npcall(require, "dap")
 	if not dap then return end
 	if args.mods:find("c") then
@@ -105,10 +105,10 @@ function M.toggle_breakpoint(args)
 end
 
 --- Handler for clicking the line number.
-function M.lnum_click(args)
+local function lnum_click(args)
 	if args.button == "l" then
 		-- Toggle DAP (conditional) breakpoint on (Ctrl-)left click
-		M.toggle_breakpoint(args)
+		toggle_breakpoint(args)
 	elseif args.button == "m" then
 		c("norm! yy")  -- Yank on middle click
 	elseif args.button == "r" then
@@ -119,5 +119,24 @@ function M.lnum_click(args)
 		end
 	end
 end
+
+M.clickhandlers = {
+	Lnum                   = lnum_click,
+	FoldPlus               = foldplus_click,
+	FoldMinus              = foldminus_click,
+	FoldEmpty              = foldempty_click,
+	DapBreakpointRejected  = toggle_breakpoint,
+	DapBreakpoint          = toggle_breakpoint,
+	DapBreakpointCondition = toggle_breakpoint,
+	DiagnosticSignError    = diagnostic_click,
+	DiagnosticSignHint     = diagnostic_click,
+	DiagnosticSignInfo     = diagnostic_click,
+	DiagnosticSignWarn     = diagnostic_click,
+	GitSignsTopdelete      = gitsigns_click,
+	GitSignsUntracked      = gitsigns_click,
+	GitSignsAdd            = gitsigns_click,
+	GitSignsChangedelete   = gitsigns_click,
+	GitSignsDelete         = gitsigns_click,
+}
 
 return M

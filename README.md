@@ -20,10 +20,10 @@ use({
 
 ## Usage
 
-This plugin provides four global VimL functions. `ScFa`, `ScSa` and `ScLa` are to be used as `%@` click-handlers for the fold, sign and line number segments in your `'statuscolumn'` string respectively.
-`ScLn` can be used as the line number itself inside a `%{}` eval segment, configurable through the [`setup()`](#Configuration) function.
+This plugin provides four global lua functions. `ScFa`, `ScSa` and `ScLa` are to be used as `%@` click-handlers for the fold, sign and line number segments in your `'statuscolumn'` string respectively.
+`ScLn` will return the line number string, which can be configured through the [`setup()`](#Configuration) function. They can be used like so:
 
-    vim.o.statuscolumn = "%@ScFa@%C%T%@ScLa@%s%T@ScNa@%=%{ScLn()}%T"
+    vim.o.statuscolumn = "%@v:lua.ScFa@%C%T%@v:lua.ScLa@%s%T@v:lua.ScNa@%=%{v:lua.ScLn()}%T"
 
 ## Configuration
 
@@ -62,7 +62,7 @@ local cfg = {
 }
 ```
 
-Besides the config options, the `setup()` function accepts a list of click actions.
+The configuration table can contain, besides the options, a list of sign/click action pairs.
 Each entry is the name of a sign, or `Lnum` and `FoldPlus/Minus/Empty` for the number and fold columns.
 To modify the default options, pass a table with the options you want to overwrite to the `setup()` function:
 
@@ -88,9 +88,9 @@ require("statuscol").setup(cfg)
 ```
 ### Default click actions
 
-Currently the following builtin actions are supported:
+**Sign/click action pair suggestions are welcome!**
 
-**Still figuring out what signs could use which click actions. Suggestions welcome.**
+Currently the following builtin actions are supported:
 
 |Sign|Button|Modifier|Action|
 |----|------|--------|------|

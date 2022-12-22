@@ -5,7 +5,7 @@ local o = vim.o
 local S = vim.schedule
 local M = {}
 local signs = {}
-local builtin = require("statuscol.builtin")
+local builtin
 
 local cfg = {
 	separator = " ",
@@ -18,23 +18,6 @@ local cfg = {
 	-- Builtin 'statuscolumn' options
 	statuscolumn = false,
 	order = "FSNs",
-	-- Click actions
-	Lnum                   = builtin.lnum_click,
-	FoldPlus               = builtin.foldplus_click,
-	FoldMinus              = builtin.foldminus_click,
-	FoldEmpty              = builtin.foldempty_click,
-	DapBreakpointRejected  = builtin.toggle_breakpoint,
-	DapBreakpoint          = builtin.toggle_breakpoint,
-	DapBreakpointCondition = builtin.toggle_breakpoint,
-	DiagnosticSignError    = builtin.diagnostic_click,
-	DiagnosticSignHint     = builtin.diagnostic_click,
-	DiagnosticSignInfo     = builtin.diagnostic_click,
-	DiagnosticSignWarn     = builtin.diagnostic_click,
-	GitSignsTopdelete      = builtin.gitsigns_click,
-	GitSignsUntracked      = builtin.gitsigns_click,
-	GitSignsAdd            = builtin.gitsigns_click,
-	GitSignsChangedelete   = builtin.gitsigns_click,
-	GitSignsDelete         = builtin.gitsigns_click,
 }
 
 --- Store defined signs without whitespace.
@@ -60,7 +43,7 @@ local function get_click_args(minwid, clicks, button, mods)
 end
 
 --- Execute fold column click callback.
-function M.get_fold_action(minwid, clicks, button, mods)
+local function get_fold_action(minwid, clicks, button, mods)
 	local args = get_click_args(minwid, clicks, button, mods)
 	local type = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
 	type = type == " " and "FoldEmpty" or type == "+" and "FoldPlus" or "FoldMinus"
@@ -69,7 +52,7 @@ function M.get_fold_action(minwid, clicks, button, mods)
 end
 
 --- Execute sign column click callback.
-function M.get_sign_action(minwid, clicks, button, mods)
+local function get_sign_action(minwid, clicks, button, mods)
 	local args = get_click_args(minwid, clicks, button, mods)
 	local sign = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
 	-- If clicked on empty space in the sign column, try one cell to the left
@@ -87,13 +70,13 @@ function M.get_sign_action(minwid, clicks, button, mods)
 end
 
 --- Execute line number click callback.
-function M.get_lnum_action(minwid, clicks, button, mods)
+local function get_lnum_action(minwid, clicks, button, mods)
 	local args = get_click_args(minwid, clicks, button, mods)
 	S(function() cfg.Lnum(args) end)
 end
 
---- Return custom or builtin line number string
-function M.get_lnum_string()
+--- Return custom or builtin line number string.
+local function get_lnum_string()
 	if cfg.lnumfunc then
 		return cfg.lnumfunc()
 	else
@@ -101,23 +84,22 @@ function M.get_lnum_string()
 	end
 end
 
-function M.setup(user)
-	if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
+-- Only return separator if there statuscolumn is non empty.
+local function get_separator_string()
+	local textoff = vim.fn.getwininfo(a.nvim_get_current_win())[1].textoff
+	return tonumber(textoff) > 0 and cfg.separator or ""
+end
 
-	c([[
-		function! ScFa(a, b, c, d)
-			call v:lua.require("statuscol").get_fold_action(a:a, a:b, a:c, a:d)
-		endfunction
-		function! ScSa(a, b, c, d)
-			call v:lua.require("statuscol").get_sign_action(a:a, a:b, a:c, a:d)
-		endfunction
-		function! ScLa(a, b, c, d)
-			call v:lua.require("statuscol").get_lnum_action(a:a, a:b, a:c, a:d)
-		endfunction
-		function! ScLn()
-			return v:lua.require("statuscol").get_lnum_string()
-		endfunction
-	]])
+function M.setup(user)
+	builtin = require("statuscol.builtin")
+	if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
+	cfg = vim.tbl_deep_extend("keep", cfg, builtin.clickhandlers)
+
+	_G.ScFa = get_fold_action
+	_G.ScSa = get_sign_action
+	_G.ScLa = get_lnum_action
+	_G.ScLn = get_lnum_string
+	_G.ScSp = get_separator_string
 
 	if cfg.statuscolumn then
 		local reeval = cfg.reeval or cfg.relculright
@@ -126,12 +108,12 @@ function M.setup(user)
 		for i = 1, #cfg.order do
 			local segment = cfg.order:sub(i, i)
 			if segment == "F" then
-				stc = stc.."%@ScFa@%C%T"
+				stc = stc.."%@v:lua.ScFa@%C%T"
 			elseif segment == "S" then
-				stc = stc.."%@ScSa@%s%T"
+				stc = stc.."%@v:lua.ScSa@%s%T"
 			elseif segment == "N" then
-				stc = stc.."%@ScLa@"
-				stc = stc..(reeval and "%=%{ScLn()}" or "%{%ScLn()%}")
+				stc = stc.."%@v:lua.ScLa@"
+				stc = stc..(reeval and "%=%{v:lua.ScLn()}" or "%{%v:lua.ScLn()%}")
 				-- End the click execute label if separator is not next
 				if cfg.order:sub(i + 1, i + 1) ~= "s" then
 					stc = stc.."%T"
@@ -139,9 +121,9 @@ function M.setup(user)
 			elseif segment == "s" then
 				-- Add click execute label if line number was not previous
 				if cfg.order:sub(i - 1, i - 1) == "N" then
-					stc = stc..cfg.separator.."%T"
+					stc = stc.."%{v:lua.ScSp()}%T"
 				else
-					stc = stc.."%@ScLa@"..cfg.separator.."%T"
+					stc = stc.."%@v:lua.ScLa@%{v:lua.ScSp()}%T"
 				end
 			end
 		end

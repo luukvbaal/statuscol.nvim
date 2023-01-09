@@ -29,6 +29,9 @@ function. They can be used like so:
 <
 
 
+Alternatively, passing `setopt = true` to the `setup()` function will configure
+the `'statuscolumn'` option for you.
+
 CONFIGURATION                                        *statuscol-configuration*
 
 DEFAULT OPTIONS ~
@@ -44,7 +47,7 @@ DEFAULT OPTIONS ~
       lnumfunc = nil,        -- custom function called by ScLn(), should return a string
       reeval = false,        -- whether or not the string returned by lnumfunc should be reevaluated
       -- Builtin 'statuscolumn' options
-      statuscolumn = false,  -- whether to set the 'statuscolumn', providing the builtin click actions
+      setopt = false,        -- whether to set the 'statuscolumn', providing builtin click actions
       order = "FSNs",        -- order of the fold, sign, line number and separator segments
       -- Click actions
       Lnum                   = builtin.lnum_click,

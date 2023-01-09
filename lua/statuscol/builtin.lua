@@ -57,12 +57,12 @@ local function fold_click(args, open, empty)
 end
 
 --- Handler for clicking '+' in fold column.
-local function foldplus_click(args)
+local function foldclose_click(args)
 	fold_click(args, true)
 end
 
 --- Handler for clicking '-' in fold column.
-local function foldminus_click(args)
+local function foldopen_click(args)
 	fold_click(args, false)
 end
 
@@ -122,8 +122,8 @@ end
 
 M.clickhandlers = {
 	Lnum                   = lnum_click,
-	FoldPlus               = foldplus_click,
-	FoldMinus              = foldminus_click,
+	FoldClose              = foldclose_click,
+	FoldOpen               = foldopen_click,
 	FoldEmpty              = foldempty_click,
 	DapBreakpointRejected  = toggle_breakpoint,
 	DapBreakpoint          = toggle_breakpoint,

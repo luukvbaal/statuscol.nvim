@@ -1,7 +1,7 @@
 local a = vim.api
 local f = vim.fn
-local c = vim.cmd
 local o = vim.o
+local O = vim.opt
 local S = vim.schedule
 local M = {}
 local signs = {}
@@ -44,9 +44,10 @@ end
 
 --- Execute fold column click callback.
 local function get_fold_action(minwid, clicks, button, mods)
+	local foldopen = O.fillchars:get().foldopen or "-"
 	local args = get_click_args(minwid, clicks, button, mods)
-	local type = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
-	type = type == " " and "FoldEmpty" or type == "+" and "FoldPlus" or "FoldMinus"
+	local char = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
+	local type = char == " " and "FoldEmpty" or char == foldopen and "FoldOpen" or "FoldClose"
 
 	S(function() cfg[type](args) end)
 end
@@ -84,7 +85,7 @@ local function get_lnum_string()
 	end
 end
 
--- Only return separator if there statuscolumn is non empty.
+-- Only return separator if the statuscolumn is non empty.
 local function get_separator_string()
 	local textoff = vim.fn.getwininfo(a.nvim_get_current_win())[1].textoff
 	return tonumber(textoff) > 0 and cfg.separator or ""

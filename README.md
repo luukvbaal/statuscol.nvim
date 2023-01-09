@@ -25,6 +25,8 @@ This plugin provides four global lua functions. `ScFa`, `ScSa` and `ScLa` are to
 
     vim.o.statuscolumn = "%@v:lua.ScFa@%C%T%@v:lua.ScLa@%s%T@v:lua.ScNa@%=%{v:lua.ScLn()}%T"
 
+Alternatively, passing `setopt = true` to the `setup()` function will configure the `'statuscolumn'` option for you.
+
 ## Configuration
 
 ### Default options
@@ -40,7 +42,7 @@ local cfg = {
   lnumfunc = nil,        -- custom function called by ScLn(), should return a string
   reeval = false,        -- whether or not the string returned by lnumfunc should be reevaluated
   -- Builtin 'statuscolumn' options
-  statuscolumn = false,  -- whether to set the 'statuscolumn', providing the builtin click actions
+  setopt = false,        -- whether to set the 'statuscolumn', providing builtin click actions
   order = "FSNs",        -- order of the fold, sign, line number and separator segments
   -- Click actions
   Lnum                   = builtin.lnum_click,

@@ -16,7 +16,7 @@ local cfg = {
 	lnumfunc = nil,
 	reeval = false,
 	-- Builtin 'statuscolumn' options
-	statuscolumn = false,
+	setopt = false,
 	order = "FSNs",
 }
 
@@ -102,7 +102,7 @@ function M.setup(user)
 	_G.ScLn = get_lnum_string
 	_G.ScSp = get_separator_string
 
-	if cfg.statuscolumn then
+	if cfg.setopt then
 		local reeval = cfg.reeval or cfg.relculright
 		local stc = ""
 

@@ -23,7 +23,9 @@ local cfg = {
 --- Store defined signs without whitespace.
 local function update_sign_defined()
 	for _, sign in ipairs(f.sign_getdefined()) do
-		signs[sign.name] = sign.text:gsub("%s","")
+		if sign.text then
+			signs[sign.name] = sign.text:gsub("%s","")
+		end
 	end
 end
 

@@ -36,7 +36,7 @@ local builtin = require("statuscol.builtin")
 local cfg = {
   separator = false,     -- separator between line number and buffer text ("│" or extra " " padding)
   -- Builtin line number string options for ScLn() segment
-  thousands = false      -- or line number thousands separator string ("." / ",")
+  thousands = false,     -- or line number thousands separator string ("." / ",")
   relculright = false,   -- whether to right-align the cursor line number with 'relativenumber' set
   -- Custom line number string options for ScLn() segment
   lnumfunc = nil,        -- custom function called by ScLn(), should return a string

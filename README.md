@@ -23,7 +23,7 @@ use({
 Passing `setopt = true` to the [`setup()`](#Configuration) function will configure the `'statuscolumn'` option for you.
 The builtin status column format can be configured through various configuration variables in the setup table.
 
-Alternatively this plugin exposes four global lua functions. These can be used by those who need more flexibility but still want to make use of the number format function or click handlers this plugin provides.
+Alternatively this plugin exposes four global lua functions. These can be used by those who need more flexibility, but still want to make use of the number format function or click handlers this plugin provides.
 
 `ScFa`, `ScSa` and `ScLa` are to be used as `%@` click-handlers for the fold, sign and line number segments in your `'statuscolumn'` string respectively. `ScLn` will return the line number string, which can be configured through the `setup()` function. They can be used like so:
 

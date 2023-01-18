@@ -7,7 +7,7 @@ local M = {}
 
 -- Return line number in configured format.
 function M.lnumfunc(number, relativenumber, thousands, relculright)
-	if v.wrap or (not relativenumber and not number) then return "" end
+	if v.virtnum ~= 0 or (not relativenumber and not number) then return "" end
 	local lnum = v.lnum
 
 	if relativenumber then

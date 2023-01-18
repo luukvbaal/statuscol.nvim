@@ -1,11 +1,11 @@
 # statuscol.nvim
 
-Status column plugin that provides click handlers for the ['statuscolumn'](https://neovim.io/doc/user/options.html#'statuscolumn').
-Requires Neovim >= 0.9
-
-## Install
+Status column plugin that provides a configurable ['statuscolumn'](https://neovim.io/doc/user/options.html#'statuscolumn') and click handlers.
+Requires Neovim >= 0.9.
 
 <!-- panvimdoc-ignore-start -->
+
+## Install
 
 Install with [packer](https://github.com/wbthomason/packer.nvim):
 
@@ -20,12 +20,14 @@ use({
 
 ## Usage
 
-This plugin provides four global lua functions. `ScFa`, `ScSa` and `ScLa` are to be used as `%@` click-handlers for the fold, sign and line number segments in your `'statuscolumn'` string respectively.
-`ScLn` will return the line number string, which can be configured through the [`setup()`](#Configuration) function. They can be used like so:
+Passing `setopt = true` to the [`setup()`](#Configuration) function will configure the `'statuscolumn'` option for you.
+The builtin status column format can be configured through various configuration variables in the setup table.
+
+Alternatively this plugin exposes four global lua functions. These can be used by those who need more flexibility but still want to make use of the number format function or click handlers this plugin provides.
+
+`ScFa`, `ScSa` and `ScLa` are to be used as `%@` click-handlers for the fold, sign and line number segments in your `'statuscolumn'` string respectively. `ScLn` will return the line number string, which can be configured through the `setup()` function. They can be used like so:
 
     vim.o.statuscolumn = "%@v:lua.ScFa@%C%T%@v:lua.ScLa@%s%T@v:lua.ScNa@%=%{v:lua.ScLn()}%T"
-
-Alternatively, passing `setopt = true` to the `setup()` function will configure the `'statuscolumn'` option for you.
 
 ## Configuration
 
@@ -36,7 +38,7 @@ local builtin = require("statuscol.builtin")
 local cfg = {
   separator = false,     -- separator between line number and buffer text ("│" or extra " " padding)
   -- Builtin line number string options for ScLn() segment
-  thousands = false      -- or line number thousands separator string ("." / ",")
+  thousands = false,     -- or line number thousands separator string ("." / ",")
   relculright = false,   -- whether to right-align the cursor line number with 'relativenumber' set
   -- Custom line number string options for ScLn() segment
   lnumfunc = nil,        -- custom function called by ScLn(), should return a string
@@ -88,11 +90,11 @@ local cfg = {
 
 require("statuscol").setup(cfg)
 ```
-### Default click actions
+## Default click actions
 
 **Sign/click action pair suggestions are welcome!**
 
-Currently the following builtin actions are supported:
+Currently the following builtin actions are supported (optional dependencies required):
 
 |Sign|Button|Modifier|Action|
 |----|------|--------|------|

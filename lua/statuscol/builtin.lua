@@ -29,7 +29,7 @@ function M.lnumfunc(number, relativenumber, thousands, relculright)
 	return lnum
 end
 
---- Create new fold by Ctrl-clicking the range.
+--- Create new fold by middle-cliking the range.
 local function create_fold(args)
 	if foldmarker then
 		c("norm! zf"..foldmarker.."G")
@@ -39,11 +39,13 @@ local function create_fold(args)
 	end
 end
 
-local function fold_click(args, open, empty)
-	if not args.mods:find("c") then foldmarker = nil end
+local function fold_click(args, open, other)
 	-- Create fold on middle click
-	if args.button == "m" then create_fold(args) end
-	if empty then return end
+	if args.button == "m" then
+		create_fold(args)
+		if other then return end
+	end
+	foldmarker = nil
 
 	if args.button == "l" then  -- Open/Close (recursive) fold on (Ctrl)-click
 		if open then
@@ -67,7 +69,7 @@ local function foldopen_click(args)
 end
 
 --- Handler for clicking ' ' in fold column.
-local function foldempty_click(args)
+local function foldother_click(args)
 	fold_click(args, false, true)
 end
 
@@ -124,7 +126,7 @@ M.clickhandlers = {
 	Lnum                   = lnum_click,
 	FoldClose              = foldclose_click,
 	FoldOpen               = foldopen_click,
-	FoldEmpty              = foldempty_click,
+	FoldOther              = foldother_click,
 	DapBreakpointRejected  = toggle_breakpoint,
 	DapBreakpoint          = toggle_breakpoint,
 	DapBreakpointCondition = toggle_breakpoint,

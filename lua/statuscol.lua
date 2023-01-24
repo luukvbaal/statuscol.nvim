@@ -46,10 +46,12 @@ end
 
 --- Execute fold column click callback.
 local function get_fold_action(minwid, clicks, button, mods)
-	local foldopen = O.fillchars:get().foldopen or "-"
+	local fillchars = O.fillchars:get()
+	local fo = fillchars.foldopen or "-"
+	local fc = fillchars.foldclose or "+"
 	local args = get_click_args(minwid, clicks, button, mods)
 	local char = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
-	local type = char == " " and "FoldEmpty" or char == foldopen and "FoldOpen" or "FoldClose"
+	local type = char == fo and "FoldOpen" or char == fc and "FoldClose" or "FoldOther"
 
 	S(function() cfg[type](args) end)
 end

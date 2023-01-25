@@ -18,6 +18,7 @@ local cfg = {
 	-- Builtin 'statuscolumn' options
 	setopt = false,
 	order = "FSNs",
+	ft_ignore = nil,
 }
 
 --- Store defined signs without whitespace.
@@ -134,6 +135,13 @@ function M.setup(user)
 		end
 
 		o.statuscolumn = stc
+	end
+
+	if cfg.ft_ignore then
+		local group = a.nvim_create_augroup("StatusCol", { clear = true })
+		a.nvim_create_autocmd("FileType", { pattern = cfg.ft_ignore, group = group,
+			command = "set statuscolumn="
+		})
 	end
 end
 

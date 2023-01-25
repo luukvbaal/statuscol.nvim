@@ -5,8 +5,7 @@ local O = vim.opt
 local S = vim.schedule
 local M = {}
 local signs = {}
-local builtin
-
+local builtin, ffi
 local cfg = {
 	separator = " ",
 	-- Builtin line number string options
@@ -15,6 +14,8 @@ local cfg = {
 	-- Custom line number string options
 	lnumfunc = nil,
 	reeval = false,
+	-- Custom fold column string options
+	foldfunc = nil,
 	-- Builtin 'statuscolumn' options
 	setopt = false,
 	order = "FSNs",
@@ -83,16 +84,27 @@ end
 
 --- Return custom or builtin line number string.
 local function get_lnum_string()
-	if cfg.lnumfunc then
-		return cfg.lnumfunc()
+	return cfg.lnumfunc(o.number, o.relativenumber, cfg.thousands, cfg.relculright)
+end
+
+--- Return custom or builtin fold column string.
+local function get_fold_string()
+	local wp = ffi.C.find_window_by_handle(0, ffi.new('Error'))
+	local width = ffi.C.compute_foldcolumn(wp, 0)
+	local foldinfo
+
+	if width > 0 then
+		foldinfo = ffi.C.fold_info(wp, vim.v.lnum)
 	else
-		return builtin.lnumfunc(o.number, o.relativenumber, cfg.thousands, cfg.relculright)
+		foldinfo = { start = 0, level = 0, llevel = 0, lines = 0 }
 	end
+
+	return cfg.foldfunc(foldinfo, width)
 end
 
 -- Only return separator if the statuscolumn is non empty.
 local function get_separator_string()
-	local textoff = vim.fn.getwininfo(a.nvim_get_current_win())[1].textoff
+	local textoff = f.getwininfo(a.nvim_get_current_win())[1].textoff
 	return tonumber(textoff) > 0 and cfg.separator or ""
 end
 
@@ -101,25 +113,33 @@ function M.setup(user)
 	if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
 	cfg = vim.tbl_deep_extend("keep", cfg, builtin.clickhandlers)
 
+	if not cfg.lnumfunc then cfg.lnumfunc = builtin.lnumfunc end
+	if cfg.foldfunc then
+		ffi = require("statuscol.ffidef")
+		if cfg.foldfunc == "builtin" then cfg.foldfunc = builtin.foldfunc end
+	end
+
 	_G.ScFa = get_fold_action
+	_G.ScFc = get_fold_string
 	_G.ScSa = get_sign_action
 	_G.ScLa = get_lnum_action
 	_G.ScLn = get_lnum_string
 	_G.ScSp = get_separator_string
 
 	if cfg.setopt then
-		local reeval = cfg.reeval or cfg.relculright
 		local stc = ""
+		local reeval = cfg.reeval or not cfg.relculright
 
 		for i = 1, #cfg.order do
 			local segment = cfg.order:sub(i, i)
 			if segment == "F" then
-				stc = stc.."%@v:lua.ScFa@%C%T"
+				local fold = cfg.foldfunc and "%{%v:lua.ScFc()%}" or "%C"
+				stc = stc.."%@v:lua.ScFa@"..fold.."%T"
 			elseif segment == "S" then
 				stc = stc.."%@v:lua.ScSa@%s%T"
 			elseif segment == "N" then
-				stc = stc.."%@v:lua.ScLa@"
-				stc = stc..(reeval and "%=%{v:lua.ScLn()}" or "%{%v:lua.ScLn()%}")
+				stc = stc.."%@v:lua.ScLa@"..(cfg.relculright and "%=" or "")
+				stc = stc..(reeval and "%{%v:lua.ScLn()%}" or "%{v:lua.ScLn()}")
 				-- End the click execute label if separator is not next
 				if cfg.order:sub(i + 1, i + 1) ~= "s" then
 					stc = stc.."%T"

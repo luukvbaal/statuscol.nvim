@@ -1,8 +1,14 @@
 local c = vim.cmd
 local d = vim.diagnostic
 local l = vim.lsp
+local npc = vim.F.npcall
+local O = vim.opt
 local v = vim.v
 local foldmarker
+local fillchars = O.fillchars:get()
+local foldopen = fillchars.foldopen or "-"
+local foldclosed = fillchars.foldclose or "+"
+local foldsep = fillchars.foldsep or "│"
 local M = {}
 
 -- Return line number in configured format.
@@ -27,6 +33,40 @@ function M.lnumfunc(number, relativenumber, thousands, relculright)
 	end
 
 	return lnum
+end
+
+-- Return fold column in configured format.
+function M.foldfunc(foldinfo, width)
+	if width == 0 then return "" end
+
+	local string = "%#FoldColumn#"
+	local level = foldinfo.level
+
+	if level == 0 then
+		return string..(" "):rep(width).."%#LineNr#"
+	end
+
+	local closed = foldinfo.lines > 0
+	local first_level = level - width - (closed and 1 or 0) + 1
+	if first_level < 1 then first_level = 1 end
+
+	-- For each column, add a foldopen, foldclosed, foldsep or whitespace char
+	for col = 1, width do
+		if closed and (col == level or col == width) then
+			string = string..foldclosed
+		elseif foldinfo.start == v.lnum and first_level + col > foldinfo.llevel then
+			string = string..foldopen
+		else
+			string = string..foldsep
+		end
+
+		if col == level then
+			string = string..(" "):rep(width - col)
+			break
+		end
+	end
+
+	return string.."%#LineNr#"
 end
 
 --- Create new fold by middle-cliking the range.
@@ -60,17 +100,17 @@ end
 
 --- Handler for clicking '+' in fold column.
 local function foldclose_click(args)
-	fold_click(args, true)
+	npc(fold_click, args, true)
 end
 
 --- Handler for clicking '-' in fold column.
 local function foldopen_click(args)
-	fold_click(args, false)
+	npc(fold_click, args, false)
 end
 
 --- Handler for clicking ' ' in fold column.
 local function foldother_click(args)
-	fold_click(args, false, true)
+	npc(fold_click, args, false, true)
 end
 
 --- Handler for clicking a Diagnostc* sign.
@@ -95,7 +135,7 @@ end
 
 --- Toggle a (conditional) DAP breakpoint.
 local function toggle_breakpoint(args)
-	local dap = vim.F.npcall(require, "dap")
+	local dap = npc(require, "dap")
 	if not dap then return end
 	if args.mods:find("c") then
 		vim.ui.input({ prompt = "Breakpoint condition: " }, function(input)

@@ -48,6 +48,9 @@ DEFAULT OPTIONS ~
       -- Custom line number string options for ScLn() segment
       lnumfunc = nil,        -- custom function called by ScLn(), should return a string
       reeval = false,        -- whether or not the string returned by lnumfunc should be reevaluated
+      -- Custom fold column string options for ScFc() segment
+      foldfunc = nil,        -- nil for "%C" segment, "builtin" for builtin function, or custom function
+                             -- called by ScFc(), should return a string
       -- Builtin 'statuscolumn' options
       setopt = false,        -- whether to set the 'statuscolumn', providing builtin click actions
       order = "FSNs",        -- order of the fold, sign, line number and separator segments
@@ -73,10 +76,12 @@ DEFAULT OPTIONS ~
 <
 
 
+CUSTOM CLICK ACTIONS ~
+
 The configuration table can contain, besides the options, a list of sign/click
 action pairs. Each entry is the name of a sign, or `Lnum` and
 `FoldPlus/Minus/Empty` for the number and fold columns. To modify the default
-options, pass a table with the options you want to overwrite to the `setup()`
+actions, pass a table with the actions you want to overwrite to the `setup()`
 function:
 
 >
@@ -100,6 +105,28 @@ function:
     require("statuscol").setup(cfg)
 <
 
+
+CUSTOM LINE NUMBER FUNCTION ~
+
+The `lnumfunc` entry can be a lua function that returns a custom line number
+string:
+
+>
+    require("statuscol").setup({ setopt = true, reeval = true, lnumfunc = function()
+        return ((vim.v.lnum % 2 > 0) and "%#DiffDelete#%=" or "%#DiffAdd#%=")..vim.v.lnum
+    end })
+<
+
+
+When `nil`, the builtin line number function is used which can be configured
+through `thousands` and `relculright`.
+
+CUSTOM FOLD COLUMN FUNCTION ~
+
+The `foldfunc` entry can be: * `nil`: use the default `%C` `'statuscolumn'`
+item. * `"builtin"`: use the builtin fold column function. * lua function: this
+function is passed a `foldinfo = {start,level,llevel,lines}` table and `width`
+argument and should return a fold column string.
 
 DEFAULT CLICK ACTIONS                        *statuscol-default-click-actions*
 

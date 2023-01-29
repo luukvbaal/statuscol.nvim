@@ -52,9 +52,9 @@ local cfg = {
   ft_ignore = nil,       -- lua table with filetypes for which 'statuscolumn' will be unset
   -- Click actions
   Lnum                   = builtin.lnum_click,
-  FoldPlus               = builtin.foldplus_click,
-  FoldMinus              = builtin.foldminus_click,
-  FoldEmpty              = builtin.foldempty_click,
+  FoldClose              = builtin.foldclose_click,
+  FoldOpen               = builtin.foldopen_click,
+  FoldOther              = builtin.foldother_click,
   DapBreakpointRejected  = builtin.toggle_breakpoint,
   DapBreakpoint          = builtin.toggle_breakpoint,
   DapBreakpointCondition = builtin.toggle_breakpoint,
@@ -73,7 +73,7 @@ local cfg = {
 ### Custom click actions
 
 The configuration table can contain, besides the options, a list of sign/click action pairs.
-Each entry is the name of a sign, or `Lnum` and `FoldPlus/Minus/Empty` for the number and fold columns.
+Each entry is the name of a sign, or `Lnum` and `FoldClose/Open/Other` for the number and fold columns.
 To modify the default actions, pass a table with the actions you want to overwrite to the `setup()` function:
 
 ```lua
@@ -118,26 +118,30 @@ The `foldfunc` entry can be:
 
 ## Default click actions
 
+Note that some of the default actions are for optional dependencies, and that right click requires [`'mousemodel' == "extend"`](https://neovim.io/doc/user/options.html#'mousem')
+Below follows a list of builtin click actions.
 **Sign/click action pair suggestions are welcome!**
-
-Currently the following builtin actions are supported (optional dependencies required):
 
 |Sign|Button|Modifier|Action|
 |----|------|--------|------|
-|Lnum|Left||Toggle [DAP](https://github.com/mfussenegger/nvim-dap) breakpoint|
+|Lnum|Left||Toggle DAP breakpoint|
 |Lnum|Left|<kbd>Ctrl</kbd>|Toggle DAP conditional breakpoint|
 |Lnum|Middle||Yank line|
 |Lnum|Right||Paste line|
 |Lnum|Right x2||Delete line|
-|FoldPlus|Left||Open fold|
-|FoldPlus|Left|<kbd>Ctrl</kbd>|Open fold recursively|
-|FoldMinus|Left||Close fold|
-|FoldMinus|Left|<kbd>Ctrl</kbd>|Close fold recursively|
-|FoldPlus/Minus|Right||Delete fold|
-|FoldPlus/Minus|Right|<kbd>Ctrl</kbd>|Delete fold recursively|
+|FoldClose|Left||Open fold|
+|FoldClose|Left|<kbd>Ctrl</kbd>|Open fold recursively|
+|FoldOpen|Left||Close fold|
+|FoldOpen|Left|<kbd>Ctrl</kbd>|Close fold recursively|
+|FoldClose/Other|Right||Delete fold|
+|FoldClose/Other|Right|<kbd>Ctrl</kbd>|Delete fold recursively|
 |Fold*|Middle||Create fold in range(click twice)|
-|Diagnostic*|Left||Open diagnostic [float](https://neovim.io/doc/user/diagnostic.html#vim.diagnostic.open_float())|
-|Diagnostic*|Middle||Select available [code action](https://neovim.io/doc/user/lsp.html#vim.lsp.buf.code_action())|
-|[GitSigns](https://github.com/lewis6991/gitsigns.nvim)*|Left||Preview hunk|
+|Diagnostic*|Left||Open diagnostic float|
+|Diagnostic*|Middle||Select available code action|
+|GitSigns*|Left||Preview hunk|
 |GitSigns*|Middle||Reset hunk|
 |GitSigns*|Right||Stage hunk|
+
+Optional dependencies:
+* [nvim-dap](https://github.com/mfussenegger/nvim-dap)
+* [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)

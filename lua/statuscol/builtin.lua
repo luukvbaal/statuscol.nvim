@@ -11,7 +11,7 @@ local foldclosed = fillchars.foldclose or "+"
 local foldsep = fillchars.foldsep or "│"
 local M = {}
 
--- Return line number in configured format.
+--- Return line number in configured format.
 function M.lnumfunc(number, relativenumber, thousands, relculright)
 	if v.virtnum ~= 0 or (not relativenumber and not number) then return "" end
 	local lnum = v.lnum
@@ -35,7 +35,7 @@ function M.lnumfunc(number, relativenumber, thousands, relculright)
 	return lnum
 end
 
--- Return fold column in configured format.
+--- Return fold column in configured format.
 function M.foldfunc(foldinfo, width)
 	if width == 0 then return "" end
 

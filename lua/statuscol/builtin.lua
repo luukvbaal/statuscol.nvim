@@ -39,7 +39,7 @@ end
 function M.foldfunc(foldinfo, width)
 	if width == 0 then return "" end
 
-	local string = "%#FoldColumn#"
+	local string = v.relnum > 0 and "%#FoldColumn#" or "%#CursorLineFold#"
 	local level = foldinfo.level
 
 	if level == 0 then

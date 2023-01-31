@@ -143,5 +143,6 @@ Below follows a list of builtin click actions.
 |GitSigns*|Right||Stage hunk|
 
 Optional dependencies:
+
 * [nvim-dap](https://github.com/mfussenegger/nvim-dap)
 * [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)

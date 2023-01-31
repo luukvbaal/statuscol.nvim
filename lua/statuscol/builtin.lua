@@ -40,11 +40,10 @@ function M.foldfunc(foldinfo, width)
 	if width == 0 then return "" end
 
 	local string = v.relnum > 0 and "%#FoldColumn#" or "%#CursorLineFold#"
-	local numhl = v.relnum > 0 and "%#LineNr#" or "%#CursorLineNr#"
 	local level = foldinfo.level
 
 	if level == 0 then
-		return string..(" "):rep(width)..numhl
+		return string..(" "):rep(width).."%*"
 	end
 
 	local closed = foldinfo.lines > 0
@@ -67,7 +66,7 @@ function M.foldfunc(foldinfo, width)
 		end
 	end
 
-	return string..numhl
+	return string.."%*"
 end
 
 --- Create new fold by middle-cliking the range.

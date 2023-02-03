@@ -11,6 +11,7 @@ ffi.cdef([[
 	foldinfo_T fold_info(win_T* wp, int lnum);
 	win_T *find_window_by_handle(int Window, Error *err);
 	int compute_foldcolumn(win_T *wp, int col);
+	int win_col_off(win_T *wp);
 ]])
 
 return ffi

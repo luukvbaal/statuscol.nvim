@@ -89,7 +89,7 @@ end
 
 --- Return custom or builtin fold column string.
 local function get_fold_string()
-	local wp = ffi.C.find_window_by_handle(0, ffi.new('Error'))
+	local wp = ffi.C.find_window_by_handle(0, ffi.new("Error"))
 	local width = ffi.C.compute_foldcolumn(wp, 0)
 	local foldinfo
 
@@ -104,18 +104,18 @@ end
 
 -- Only return separator if the statuscolumn is non empty.
 local function get_separator_string()
-	local textoff = f.getwininfo(a.nvim_get_current_win())[1].textoff
-	return tonumber(textoff) > 0 and cfg.separator or ""
+	local textoff = ffi.C.win_col_off(ffi.C.find_window_by_handle(0, ffi.new("Error")))
+	return textoff > 0 and cfg.separator or ""
 end
 
 function M.setup(user)
+	ffi = require("statuscol.ffidef")
 	builtin = require("statuscol.builtin")
 	if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
 	cfg = vim.tbl_deep_extend("keep", cfg, builtin.clickhandlers)
 
 	if not cfg.lnumfunc then cfg.lnumfunc = builtin.lnumfunc end
 	if cfg.foldfunc then
-		ffi = require("statuscol.ffidef")
 		if cfg.foldfunc == "builtin" then cfg.foldfunc = builtin.foldfunc end
 	end
 

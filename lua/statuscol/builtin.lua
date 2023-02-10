@@ -24,12 +24,10 @@ function M.lnumfunc(number, relativenumber, thousands, relculright)
 		lnum = string.reverse(lnum):gsub("%d%d%d", "%1"..thousands):reverse():gsub("^%"..thousands, "")
 	end
 
-	if not relculright then
-		if relativenumber then
-			lnum = (v.relnum > 0 and "%=" or "")..lnum..(v.relnum > 0 and "" or "%=")
-		else
-			lnum = "%="..lnum
-		end
+	if not relculright and relativenumber then
+		lnum = (v.relnum > 0 and "%=" or "")..lnum..(v.relnum > 0 and "" or "%=")
+	else
+		lnum = "%="..lnum
 	end
 
 	return lnum

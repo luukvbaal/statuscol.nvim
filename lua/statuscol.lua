@@ -1,5 +1,6 @@
 local a = vim.api
 local f = vim.fn
+local g = vim.g
 local o = vim.o
 local O = vim.opt
 local S = vim.schedule
@@ -89,7 +90,7 @@ end
 
 --- Return custom or builtin fold column string.
 local function get_fold_string()
-	local wp = ffi.C.find_window_by_handle(0, ffi.new("Error"))
+	local wp = ffi.C.find_window_by_handle(g.statusline_winid, ffi.new("Error"))
 	local width = ffi.C.compute_foldcolumn(wp, 0)
 	local foldinfo
 
@@ -108,6 +109,34 @@ local function get_separator_string()
 	return textoff > 0 and cfg.separator or ""
 end
 
+local function get_statuscol_string()
+	local stc = ""
+
+	for i = 1, #cfg.order do
+		local segment = cfg.order:sub(i, i)
+		if segment == "F" then
+			stc = stc..(cfg.foldfunc and get_fold_string() or "%C").."%T"
+		elseif segment == "S" then
+			stc = stc.."%@v:lua.ScSa@%s%T"
+		elseif segment == "N" then
+			stc = stc.."%@v:lua.ScLa@"..get_lnum_string()
+			-- End the click execute label if separator is not next
+			if cfg.order:sub(i + 1, i + 1) ~= "s" then
+				stc = stc.."%T"
+			end
+		elseif segment == "s" then
+			-- Add click execute label if line number was not previous
+			if cfg.order:sub(i - 1, i - 1) == "N" then
+				stc = stc..get_separator_string().."%T"
+			else
+				stc = stc.."%@v:lua.ScLa@"..get_separator_string().."%T"
+			end
+		end
+	end
+
+	return stc
+end
+
 function M.setup(user)
 	ffi = require("statuscol.ffidef")
 	builtin = require("statuscol.builtin")
@@ -120,41 +149,16 @@ function M.setup(user)
 	end
 
 	_G.ScFa = get_fold_action
-	_G.ScFc = get_fold_string
 	_G.ScSa = get_sign_action
 	_G.ScLa = get_lnum_action
-	_G.ScLn = get_lnum_string
-	_G.ScSp = get_separator_string
 
 	if cfg.setopt then
-		local stc = ""
-		local reeval = cfg.reeval or not cfg.relculright
-
-		for i = 1, #cfg.order do
-			local segment = cfg.order:sub(i, i)
-			if segment == "F" then
-				local fold = cfg.foldfunc and "%{%v:lua.ScFc()%}" or "%C"
-				stc = stc.."%@v:lua.ScFa@"..fold.."%T"
-			elseif segment == "S" then
-				stc = stc.."%@v:lua.ScSa@%s%T"
-			elseif segment == "N" then
-				stc = stc.."%@v:lua.ScLa@"..(cfg.relculright and "%=" or "")
-				stc = stc..(reeval and "%{%v:lua.ScLn()%}" or "%{v:lua.ScLn()}")
-				-- End the click execute label if separator is not next
-				if cfg.order:sub(i + 1, i + 1) ~= "s" then
-					stc = stc.."%T"
-				end
-			elseif segment == "s" then
-				-- Add click execute label if line number was not previous
-				if cfg.order:sub(i - 1, i - 1) == "N" then
-					stc = stc.."%{v:lua.ScSp()}%T"
-				else
-					stc = stc.."%@v:lua.ScLa@%{v:lua.ScSp()}%T"
-				end
-			end
-		end
-
-		o.statuscolumn = stc
+		_G.StatusCol = get_statuscol_string
+		o.statuscolumn = "%!v:lua.StatusCol()"
+	else
+		_G.ScLn = get_lnum_string
+		_G.ScFc = get_fold_string
+		_G.ScSp = get_separator_string
 	end
 
 	if cfg.ft_ignore then

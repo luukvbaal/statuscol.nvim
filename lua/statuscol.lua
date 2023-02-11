@@ -14,7 +14,6 @@ local cfg = {
 	relculright = false,
 	-- Custom line number string options
 	lnumfunc = nil,
-	reeval = false,
 	-- Custom fold column string options
 	foldfunc = nil,
 	-- Builtin 'statuscolumn' options

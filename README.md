@@ -42,7 +42,6 @@ local cfg = {
   relculright = false,   -- whether to right-align the cursor line number with 'relativenumber' set
   -- Custom line number string options for ScLn() segment
   lnumfunc = nil,        -- custom function called by ScLn(), should return a string
-  reeval = false,        -- whether or not the string returned by lnumfunc should be reevaluated
   -- Custom fold column string options for ScFc() segment
   foldfunc = nil,        -- nil for "%C" segment, "builtin" for builtin function, or custom function
                          -- called by ScFc(), should return a string
@@ -102,7 +101,7 @@ require("statuscol").setup(cfg)
 The `lnumfunc` entry can be a lua function that returns a custom line number string:
 
 ```lua
-require("statuscol").setup({ setopt = true, reeval = true, lnumfunc = function()
+require("statuscol").setup({ setopt = true, lnumfunc = function()
     return ((vim.v.lnum % 2 > 0) and "%#DiffDelete#%=" or "%#DiffAdd#%=")..vim.v.lnum
 end })
 ```

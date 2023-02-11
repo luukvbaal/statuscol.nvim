@@ -103,13 +103,13 @@ local function get_separator_string(win)
 end
 
 local function get_statuscol_string()
-	local stc = ""
 	local win = g.statusline_winid or 0
+	local stc = ""
 
 	for i = 1, #cfg.order do
 		local segment = cfg.order:sub(i, i)
 		if segment == "F" then
-			stc = stc..(cfg.foldfunc and get_fold_string(win) or "%C").."%T"
+			stc = stc.."%@v:lua.ScFa@"..(cfg.foldfunc and get_fold_string(win) or "%C").."%T"
 		elseif segment == "S" then
 			stc = stc.."%@v:lua.ScSa@%s%T"
 		elseif segment == "N" then

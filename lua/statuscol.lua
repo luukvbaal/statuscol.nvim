@@ -89,33 +89,28 @@ local function get_lnum_string()
 end
 
 --- Return custom or builtin fold column string.
-local function get_fold_string()
-	local wp = ffi.C.find_window_by_handle(g.statusline_winid, ffi.new("Error"))
+local function get_fold_string(win)
+	local wp = ffi.C.find_window_by_handle(win or 0, ffi.new("Error"))
 	local width = ffi.C.compute_foldcolumn(wp, 0)
-	local foldinfo
-
-	if width > 0 then
-		foldinfo = ffi.C.fold_info(wp, vim.v.lnum)
-	else
-		foldinfo = { start = 0, level = 0, llevel = 0, lines = 0 }
-	end
+	local foldinfo = width > 0 and ffi.C.fold_info(wp, vim.v.lnum) or { level = 0 }
 
 	return cfg.foldfunc(foldinfo, width)
 end
 
 -- Only return separator if the statuscolumn is non empty.
-local function get_separator_string()
-	local textoff = ffi.C.win_col_off(ffi.C.find_window_by_handle(0, ffi.new("Error")))
+local function get_separator_string(win)
+	local textoff = ffi.C.win_col_off(ffi.C.find_window_by_handle(win or 0, ffi.new("Error")))
 	return textoff > 0 and cfg.separator or ""
 end
 
 local function get_statuscol_string()
 	local stc = ""
+	local win = g.statusline_winid or 0
 
 	for i = 1, #cfg.order do
 		local segment = cfg.order:sub(i, i)
 		if segment == "F" then
-			stc = stc..(cfg.foldfunc and get_fold_string() or "%C").."%T"
+			stc = stc..(cfg.foldfunc and get_fold_string(win) or "%C").."%T"
 		elseif segment == "S" then
 			stc = stc.."%@v:lua.ScSa@%s%T"
 		elseif segment == "N" then
@@ -127,9 +122,9 @@ local function get_statuscol_string()
 		elseif segment == "s" then
 			-- Add click execute label if line number was not previous
 			if cfg.order:sub(i - 1, i - 1) == "N" then
-				stc = stc..get_separator_string().."%T"
+				stc = stc..get_separator_string(win).."%T"
 			else
-				stc = stc.."%@v:lua.ScLa@"..get_separator_string().."%T"
+				stc = stc.."%@v:lua.ScLa@"..get_separator_string(win).."%T"
 			end
 		end
 	end

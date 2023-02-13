@@ -85,6 +85,7 @@ end
 
 --- Return custom or builtin line number string.
 local function get_lnum_string(win)
+	win = win or 0
 	return cfg.lnumfunc(wo[win].number, wo[win].relativenumber, cfg.thousands, cfg.relculright)
 end
 

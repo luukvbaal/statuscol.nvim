@@ -4,6 +4,7 @@ local g = vim.g
 local o = vim.o
 local O = vim.opt
 local S = vim.schedule
+local wo = vim.wo
 local M = {}
 local signs = {}
 local builtin, ffi
@@ -83,8 +84,8 @@ local function get_lnum_action(minwid, clicks, button, mods)
 end
 
 --- Return custom or builtin line number string.
-local function get_lnum_string()
-	return cfg.lnumfunc(o.number, o.relativenumber, cfg.thousands, cfg.relculright)
+local function get_lnum_string(win)
+	return cfg.lnumfunc(wo[win].number, wo[win].relativenumber, cfg.thousands, cfg.relculright)
 end
 
 --- Return custom or builtin fold column string.
@@ -113,7 +114,7 @@ local function get_statuscol_string()
 		elseif segment == "S" then
 			stc = stc.."%@v:lua.ScSa@%s%T"
 		elseif segment == "N" then
-			stc = stc.."%@v:lua.ScLa@"..get_lnum_string()
+			stc = stc.."%@v:lua.ScLa@"..get_lnum_string(win)
 			-- End the click execute label if separator is not next
 			if cfg.order:sub(i + 1, i + 1) ~= "s" then
 				stc = stc.."%T"

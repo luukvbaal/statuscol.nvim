@@ -7,7 +7,7 @@ Requires Neovim >= 0.9.
 
 ## Install
 
-Install with [packer](https://github.com/wbthomason/packer.nvim):
+Install with [packer.nvim](https://github.com/wbthomason/packer.nvim):
 
 ```lua
 use({
@@ -20,14 +20,16 @@ use({
 
 ## Usage
 
-Passing `setopt = true` to the [`setup()`](#Configuration) function will configure the `'statuscolumn'` option for you.
-The builtin status column format can be configured through various configuration variables in the setup table.
+By default, the `setup()` function will configure the `'statuscolumn'` option for you.
+This will yield a clickable 'statuscolumn' that looks the same as default neovim, obeying neovim's options that modify the way the "gutter" looks.
+Further customization is possible through various configuration variables in the `setup()` table.
 
-Alternatively this plugin exposes four global lua functions. These can be used by those who need more flexibility, but still want to make use of the number format function or click handlers this plugin provides.
+Alternatively this plugin exposes three global lua functions that can be used as click handlers with your own `'statuscolumn'`.
+`ScFa`, `ScSa` and `ScLa` are to be used as `%@` labels for the fold, sign and line number segments in your `'statuscolumn'` string respectively.
+In which case you will want to pass `{ setopt = false }` to `setup()`:
 
-`ScFa`, `ScSa` and `ScLa` are to be used as `%@` click-handlers for the fold, sign and line number segments in your `'statuscolumn'` string respectively. `ScLn` will return the line number string, which can be configured through the `setup()` function. They can be used like so:
-
-    vim.o.statuscolumn = "%@v:lua.ScFa@%C%T%@v:lua.ScLa@%s%T@v:lua.ScNa@%=%{v:lua.ScLn()}%T"
+    require("statuscol").setup({ setopt = false })
+    vim.o.statuscolumn = "%@v:lua.ScFa@%C%T%@v:lua.ScSa@%s%T@v:lua.ScLa@%=%l%T"
 
 ## Configuration
 
@@ -36,48 +38,85 @@ Alternatively this plugin exposes four global lua functions. These can be used b
 ```lua
 local builtin = require("statuscol.builtin")
 local cfg = {
-  separator = false,     -- separator between line number and buffer text ("│" or extra " " padding)
   -- Builtin line number string options for ScLn() segment
   thousands = false,     -- or line number thousands separator string ("." / ",")
   relculright = false,   -- whether to right-align the cursor line number with 'relativenumber' set
-  -- Custom line number string options for ScLn() segment
-  lnumfunc = nil,        -- custom function called by ScLn(), should return a string
-  -- Custom fold column string options for ScFc() segment
-  foldfunc = nil,        -- nil for "%C" segment, "builtin" for builtin function, or custom function
-                         -- called by ScFc(), should return a string
   -- Builtin 'statuscolumn' options
-  setopt = false,        -- whether to set the 'statuscolumn', providing builtin click actions
-  order = "FSNs",        -- order of the fold, sign, line number and separator segments
+  setopt = true,         -- whether to set the 'statuscolumn', providing builtin click actions
   ft_ignore = nil,       -- lua table with filetypes for which 'statuscolumn' will be unset
-  -- Click actions
-  Lnum                   = builtin.lnum_click,
-  FoldClose              = builtin.foldclose_click,
-  FoldOpen               = builtin.foldopen_click,
-  FoldOther              = builtin.foldother_click,
-  DapBreakpointRejected  = builtin.toggle_breakpoint,
-  DapBreakpoint          = builtin.toggle_breakpoint,
-  DapBreakpointCondition = builtin.toggle_breakpoint,
-  DiagnosticSignError    = builtin.diagnostic_click,
-  DiagnosticSignHint     = builtin.diagnostic_click,
-  DiagnosticSignInfo     = builtin.diagnostic_click,
-  DiagnosticSignWarn     = builtin.diagnostic_click,
-  GitSignsTopdelete      = builtin.gitsigns_click,
-  GitSignsUntracked      = builtin.gitsigns_click,
-  GitSignsAdd            = builtin.gitsigns_click,
-  GitSignsChangedelete   = builtin.gitsigns_click,
-  GitSignsDelete         = builtin.gitsigns_click,
+  -- Default segments (fold -> sign -> line number + separator)
+  segments = {
+    { text = { "%C" }, click = "v:lua.ScFa" },
+    { text = { "%s" }, click = "v:lua.ScSa" },
+    {
+      text = { builtin.lnumfunc, " " },
+      condition = { true, builtin.not_empty },
+      click = "v:lua.ScLa",
+    }
+  },
+  clickhandlers = {
+    Lnum                   = builtin.lnum_click,
+    FoldClose              = builtin.foldclose_click,
+    FoldOpen               = builtin.foldopen_click,
+    FoldOther              = builtin.foldother_click,
+    DapBreakpointRejected  = builtin.toggle_breakpoint,
+    DapBreakpoint          = builtin.toggle_breakpoint,
+    DapBreakpointCondition = builtin.toggle_breakpoint,
+    DiagnosticSignError    = builtin.diagnostic_click,
+    DiagnosticSignHint     = builtin.diagnostic_click,
+    DiagnosticSignInfo     = builtin.diagnostic_click,
+    DiagnosticSignWarn     = builtin.diagnostic_click,
+    GitSignsTopdelete      = builtin.gitsigns_click,
+    GitSignsUntracked      = builtin.gitsigns_click,
+    GitSignsAdd            = builtin.gitsigns_click,
+    GitSignsChangedelete   = builtin.gitsigns_click,
+    GitSignsDelete         = builtin.gitsigns_click,
+  }
 }
+```
+
+### Custom segments
+
+The status column can be customized through the `segments` table.
+Each segment can contain the following elements:
+
+```lua
+{
+  text = { "%C" },      -- table of strings or functions returning a string
+  click = "v:lua.ScFa", -- %@ click function label, applies to each text element
+  hl = "FoldColumn",    -- %# highlight group label, applies to each text element
+  condition = { true }, -- table of booleans or functions returning a boolean
+}
+```
+
+The `text` and `condition` elements should have the same length:
+
+
+```lua
+local builtin = require("statuscol.builtin")
+require("statuscol").setup({
+  segments = {
+    {
+      text = {
+        function()
+          return ((vim.v.lnum % 2 > 0) and "%#DiffDelete#%=" or "%#DiffAdd#%=").."%l"
+        end,
+        "│"
+      },
+      condition = { true, builtin.not_empty }
+    }
+  }
+})
 ```
 
 ### Custom click actions
 
-The configuration table can contain, besides the options, a list of sign/click action pairs.
-Each entry is the name of a sign, or `Lnum` and `FoldClose/Open/Other` for the number and fold columns.
+Custom sign/click action pairs can be passed through the `clickhandlers` table.
+Each element is the name of a sign, or `Lnum` and `FoldClose/Open/Other` for the number and fold columns.
 To modify the default actions, pass a table with the actions you want to overwrite to the `setup()` function:
 
 ```lua
 local cfg = {
-  order = "FNSs",
   --- The click actions have the following signature:
   ---@param args (table): {
   ---   minwid = minwid,            -- 1st argument to 'statuscolumn' %@ callback
@@ -86,34 +125,17 @@ local cfg = {
   ---   mods = mods,                -- 4th argument to 'statuscolumn' %@ callback
   ---   mousepos = f.getmousepos()  -- getmousepos() table, containing clicked line number/window id etc.
   --- }
-  Lnum = function(args)
-    if args.button == "l" and args.mods:find("c") then
-      print("I Ctrl-left clicked on line "..args.mousepos.line)
+  clickhandlers = {
+    Lnum = function(args)
+      if args.button == "l" and args.mods:find("c") then
+        print("I Ctrl-left clicked on line "..args.mousepos.line)
+      end
     end
-  end,
+  }
 }
 
 require("statuscol").setup(cfg)
 ```
-
-### Custom line number function
-
-The `lnumfunc` entry can be a lua function that returns a custom line number string:
-
-```lua
-require("statuscol").setup({ setopt = true, lnumfunc = function()
-    return ((vim.v.lnum % 2 > 0) and "%#DiffDelete#%=" or "%#DiffAdd#%=")..vim.v.lnum
-end })
-```
-
-When `nil`, the builtin line number function is used which can be configured through `thousands` and `relculright`.
-
-### Custom fold column function
-
-The `foldfunc` entry can be:
-* `nil`: use the default `%C` `'statuscolumn'` item.
-* `"builtin"`: use the builtin fold column function.
-* lua function: this function is passed a `foldinfo = {start,level,llevel,lines}` table and `width` argument and should return a fold column string.
 
 ## Default click actions
 

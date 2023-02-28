@@ -139,6 +139,7 @@ function M.setup(user)
 		GitSignsDelete         = builtin.gitsigns_click,
 	}
 	if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
+	builtin.init(cfg)
 
 	cfg.segments = cfg.segments or {
 		-- Default segments (fold -> sign -> line number -> separator)

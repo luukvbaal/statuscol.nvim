@@ -89,9 +89,6 @@ end
 
 local function set_callargs(win)
 	local fcs = Ol.fillchars:get()
-	fcs.foldopen = fcs.foldopen or "-"
-	fcs.foldclose = fcs.foldclose or "+"
-	fcs.foldsep = fcs.foldsep or "│"
 	callargs[win] = {
 		win = win,
 		wp = ffi.C.find_window_by_handle(win, error),
@@ -99,7 +96,11 @@ local function set_callargs(win)
 		culright = cfg.relculright,
 		nu = a.nvim_win_get_option(win, "nu"),
 		rnu = a.nvim_win_get_option(win, "rnu"),
-		fcs = fcs
+		fold = {
+			open = fcs.foldopen or "-",
+			close = fcs.foldclose or "+",
+			sep = fcs.foldsep or "│",
+		}
 	}
 end
 

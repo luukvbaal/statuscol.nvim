@@ -44,7 +44,7 @@ function M.foldfunc(args)
 	local closed = foldinfo.lines > 0
 	local first_level = level - width - (closed and 1 or 0) + 1
 	if first_level < 1 then first_level = 1 end
-	local close, open, sep = args.fcs.foldclose, args.fcs.foldopen, args.fcs.foldsep
+	local close, open, sep = args.fold.close, args.fold.open, args.fold.sep
 
 	-- For each column, add a foldopen, foldclosed, foldsep or padding char
 	local range = level < width and level or width

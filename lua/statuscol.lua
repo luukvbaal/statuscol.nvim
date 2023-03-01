@@ -188,12 +188,17 @@ function M.setup(user)
 	if cfg.setopt then
 		_G.StatusCol = get_statuscol_string
 		o.statuscolumn = "%!v:lua.StatusCol()"
+		local function update_callargs()
+			set_callargs(a.nvim_get_current_win())
+		end
 		a.nvim_create_autocmd("OptionSet", {
 			group = id,
 			pattern = { "number", "relativenumber", "fillchars" },
-			callback = function()
-				set_callargs(a.nvim_get_current_win())
-			end
+			callback = update_callargs
+		})
+		a.nvim_create_autocmd("BufWinEnter", {
+			group = id,
+			callback = update_callargs
 		})
 		a.nvim_create_autocmd("WinClosed", {
 			group = id,

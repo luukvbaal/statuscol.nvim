@@ -3,6 +3,8 @@ local d = vim.diagnostic
 local l = vim.lsp
 local npc = vim.F.npcall
 local v = vim.v
+local o = vim.o
+local Ol = vim.opt_local
 local foldmarker
 local ffi = require("statuscol.ffidef")
 local Cfold_info = ffi.C.fold_info
@@ -12,16 +14,16 @@ local thou, culright
 local M = {}
 
 --- Return line number in configured format.
-function M.lnumfunc(args)
-	if v.virtnum ~= 0 or (not args.rnu and not args.nu) then return "" end
-	local lnum = args.rnu and (v.relnum > 0 and v.relnum
-							 or (args.nu and v.lnum or 0)) or v.lnum
+function M.lnumfunc()
+	if v.virtnum ~= 0 or (not o.rnu and not o.nu) then return "" end
+	local lnum = o.rnu and (v.relnum > 0 and v.relnum
+							 or (o.nu and v.lnum or 0)) or v.lnum
 
 	if thou and lnum > 999 then
 		lnum = string.reverse(lnum):gsub("%d%d%d", "%1"..thou):reverse():gsub("^%"..thou, "")
 	end
 
-	if v.relnum == 0 and not culright and args.rnu then
+	if v.relnum == 0 and not culright and o.rnu then
 		return lnum.."%="
 	else
 		return "%="..lnum
@@ -44,7 +46,10 @@ function M.foldfunc(args)
 	local closed = foldinfo.lines > 0
 	local first_level = level - width - (closed and 1 or 0) + 1
 	if first_level < 1 then first_level = 1 end
-	local close, open, sep = args.fold.close, args.fold.open, args.fold.sep
+	local fcs = Ol.fillchars:get()
+	local close = fcs.foldclose or "+"
+	local open = fcs.foldopen or "-"
+	local sep = fcs.foldsep or "│"
 
 	-- For each column, add a foldopen, foldclosed, foldsep or padding char
 	local range = level < width and level or width

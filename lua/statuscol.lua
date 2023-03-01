@@ -51,9 +51,9 @@ end
 local function get_fold_action(minwid, clicks, button, mods)
 	local args = get_click_args(minwid, clicks, button, mods)
 	local char = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
-	local fold = callargs[args.mousepos.winid].fold
-	local type = char == fold.open and "FoldOpen"
-               or char == fold.close and "FoldClose" or "FoldOther"
+	local fcs = Ol.fcs:get()
+	local type = char == fcs.foldopen and "FoldOpen"
+							 or char == fcs.foldclose and "FoldClose" or "FoldOther"
 	S(function() cfg.clickhandlers[type](args) end)
 end
 
@@ -88,19 +88,11 @@ local function trycall(arg, win)
 end
 
 local function set_callargs(win)
-	local fcs = Ol.fillchars:get()
 	callargs[win] = {
 		win = win,
 		wp = ffi.C.find_window_by_handle(win, error),
 		thousands = cfg.thousands,
 		culright = cfg.relculright,
-		nu = a.nvim_win_get_option(win, "nu"),
-		rnu = a.nvim_win_get_option(win, "rnu"),
-		fold = {
-			open = fcs.foldopen or "-",
-			close = fcs.foldclose or "+",
-			sep = fcs.foldsep or "│",
-		}
 	}
 end
 
@@ -188,18 +180,6 @@ function M.setup(user)
 	if cfg.setopt then
 		_G.StatusCol = get_statuscol_string
 		o.statuscolumn = "%!v:lua.StatusCol()"
-		local function update_callargs()
-			set_callargs(a.nvim_get_current_win())
-		end
-		a.nvim_create_autocmd("OptionSet", {
-			group = id,
-			pattern = { "number", "relativenumber", "fillchars" },
-			callback = update_callargs
-		})
-		a.nvim_create_autocmd("BufWinEnter", {
-			group = id,
-			callback = update_callargs
-		})
 		a.nvim_create_autocmd("WinClosed", {
 			group = id,
 			callback = function(args)

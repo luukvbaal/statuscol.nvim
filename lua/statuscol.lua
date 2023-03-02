@@ -52,8 +52,8 @@ local function get_fold_action(minwid, clicks, button, mods)
 	local args = get_click_args(minwid, clicks, button, mods)
 	local char = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
 	local fcs = Ol.fcs:get()
-	local type = char == fcs.foldopen and "FoldOpen"
-							 or char == fcs.foldclose and "FoldClose" or "FoldOther"
+	local type = char == (fcs.foldopen or "-") and "FoldOpen"
+							 or char == (fcs.foldclose or "+") and "FoldClose" or "FoldOther"
 	S(function() cfg.clickhandlers[type](args) end)
 end
 

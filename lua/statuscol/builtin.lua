@@ -17,7 +17,9 @@ local M = {}
 function M.lnumfunc(args)
 	local nu = a.nvim_win_get_option(args.win, "nu")
 	local rnu = a.nvim_win_get_option(args.win, "rnu")
-	if v.virtnum ~= 0 or (not rnu and not nu) then return "" end
+	if not rnu and not nu then return "" end
+	if v.virtnum ~= 0 then return "%=" end
+
 	local lnum = rnu and (v.relnum > 0 and v.relnum
 							 or (nu and v.lnum or 0)) or v.lnum
 

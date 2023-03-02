@@ -1,10 +1,10 @@
+local a = vim.api
 local c = vim.cmd
 local d = vim.diagnostic
 local l = vim.lsp
+local Ol = vim.opt_local
 local npc = vim.F.npcall
 local v = vim.v
-local o = vim.o
-local Ol = vim.opt_local
 local foldmarker
 local ffi = require("statuscol.ffidef")
 local Cfold_info = ffi.C.fold_info
@@ -14,16 +14,18 @@ local thou, culright
 local M = {}
 
 --- Return line number in configured format.
-function M.lnumfunc()
-	if v.virtnum ~= 0 or (not o.rnu and not o.nu) then return "" end
-	local lnum = o.rnu and (v.relnum > 0 and v.relnum
-							 or (o.nu and v.lnum or 0)) or v.lnum
+function M.lnumfunc(args)
+	local nu = a.nvim_win_get_option(args.win, "nu")
+	local rnu = a.nvim_win_get_option(args.win, "rnu")
+	if v.virtnum ~= 0 or (not rnu and not nu) then return "" end
+	local lnum = rnu and (v.relnum > 0 and v.relnum
+							 or (nu and v.lnum or 0)) or v.lnum
 
 	if thou and lnum > 999 then
 		lnum = string.reverse(lnum):gsub("%d%d%d", "%1"..thou):reverse():gsub("^%"..thou, "")
 	end
 
-	if v.relnum == 0 and not culright and o.rnu then
+	if v.relnum == 0 and not culright and rnu then
 		return lnum.."%="
 	else
 		return "%="..lnum

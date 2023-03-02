@@ -93,7 +93,6 @@ The `text` and `condition` elements should have the same length:
 
 
 ```lua
-local builtin = require("statuscol.builtin")
 require("statuscol").setup({
   segments = {
     {
@@ -101,13 +100,45 @@ require("statuscol").setup({
         function()
           return ((vim.v.lnum % 2 > 0) and "%#DiffDelete#%=" or "%#DiffAdd#%=").."%l"
         end,
-        "│"
       },
-      condition = { true, builtin.not_empty }
     }
   }
 })
 ```
+
+### Builtin segments
+
+This plugin provides a few builtin functions that can be used as segment elements.
+
+#### builtin.lnumfunc
+
+This is the line number function used by default that obeys `'(relative)number'` and can be configured through a few options.
+
+#### builtin.foldfunc
+
+This is a fold column replacement that does not print the fold depth digits.
+
+#### builtin.not_empty
+
+This is a helper function that will return true or false depending on whether the status column is currently empty.
+It can be used to conditionally print static `text` elements. The default segments uses it for a `" "` separator.
+
+```lua
+local builtin = require("statuscol.builtin")
+require("statuscol").setup({
+  segments = {
+    { text = { "%s" }, click = "v:lua.ScSa" },
+    { text = { builtin.lnumfunc }, click = "v:lua.ScLa" },
+    {
+      text = { " ", builtin.foldfunc, " " },
+      condition = { builtin.not_empty, true, builtin.not_empty },
+      click = "v:lua.ScFa"
+    },
+  }
+})
+```
+
+Feature requests/additions for the builtin providers are welcome if they can reasonably be made to be configurable.
 
 ### Custom click actions
 

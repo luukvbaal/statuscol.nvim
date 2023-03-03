@@ -1,33 +1,25 @@
-local a = vim.api
 local c = vim.cmd
 local d = vim.diagnostic
 local l = vim.lsp
-local Ol = vim.opt_local
 local npc = vim.F.npcall
 local v = vim.v
-local foldmarker
-local ffi = require("statuscol.ffidef")
-local Cfold_info = ffi.C.fold_info
-local Cwin_col_off = ffi.C.win_col_off
-local Ccompute_foldcolumn = ffi.C.compute_foldcolumn
-local thou, culright
+local reverse = string.reverse
+local foldmarker, thou, culright, ffi, C
 local M = {}
 
 --- Return line number in configured format.
 function M.lnumfunc(args)
-	local nu = a.nvim_win_get_option(args.win, "nu")
-	local rnu = a.nvim_win_get_option(args.win, "rnu")
-	if not rnu and not nu then return "" end
+	if not args.rnu and not args.nu then return "" end
 	if v.virtnum ~= 0 then return "%=" end
 
-	local lnum = rnu and (v.relnum > 0 and v.relnum
-							 or (nu and v.lnum or 0)) or v.lnum
+	local lnum = args.rnu and (v.relnum > 0 and v.relnum
+			or (args.nu and v.lnum or 0)) or v.lnum
 
 	if thou and lnum > 999 then
-		lnum = string.reverse(lnum):gsub("%d%d%d", "%1"..thou):reverse():gsub("^%"..thou, "")
+		lnum = reverse(lnum):gsub("%d%d%d", "%1"..thou):reverse():gsub("^%"..thou, "")
 	end
 
-	if v.relnum == 0 and not culright and rnu then
+	if v.relnum == 0 and not culright and args.rnu then
 		return lnum.."%="
 	else
 		return "%="..lnum
@@ -36,10 +28,10 @@ end
 
 --- Return fold column in configured format.
 function M.foldfunc(args)
-	local width = Ccompute_foldcolumn(args.wp, 0)
+	local width = C.compute_foldcolumn(args.wp, 0)
 	if width == 0 then return "" end
 
-	local foldinfo = Cfold_info(args.wp, v.lnum)
+	local foldinfo = C.fold_info(args.wp, v.lnum)
 	local string = v.relnum > 0 and "%#FoldColumn#" or "%#CursorLineFold#"
 	local level = foldinfo.level
 
@@ -50,20 +42,16 @@ function M.foldfunc(args)
 	local closed = foldinfo.lines > 0
 	local first_level = level - width - (closed and 1 or 0) + 1
 	if first_level < 1 then first_level = 1 end
-	local fcs = Ol.fillchars:get()
-	local close = fcs.foldclose or "+"
-	local open = fcs.foldopen or "-"
-	local sep = fcs.foldsep or "│"
 
 	-- For each column, add a foldopen, foldclosed, foldsep or padding char
 	local range = level < width and level or width
 	for col = 1, range do
 		if closed and (col == level or col == width) then
-			string = string..close
+			string = string..args.fold.close
 		elseif foldinfo.start == v.lnum and first_level + col > foldinfo.llevel then
-			string = string..open
+			string = string..args.fold.open
 		else
-			string = string..sep
+			string = string..args.fold.sep
 		end
 	end
 	if range < width then string = string..(" "):rep(width - range) end
@@ -73,7 +61,7 @@ end
 
 -- Return true if the statuscolumn is not empty.
 function M.not_empty(args)
-	return Cwin_col_off(args.wp) > 0
+	return C.win_col_off(args.wp) > 0
 end
 
 --- Create new fold by middle-cliking the range.
@@ -172,6 +160,8 @@ end
 function M.init(cfg)
 	thou = cfg.thousands
 	culright = cfg.relculright
+	ffi = require("statuscol.ffidef")
+	C = ffi.C
 end
 
 return M

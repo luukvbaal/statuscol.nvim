@@ -4,7 +4,6 @@ local g = vim.g
 local o = vim.o
 local Ol = vim.opt_local
 local S = vim.schedule
-local format = string.format
 local M = {}
 local signs = {}
 local callargs = {}
@@ -12,7 +11,7 @@ local formatstr = ""
 local formatargs = {}
 local formatargret = {}
 local formatargcount = 0
-local builtin, ffi, error
+local builtin, ffi, error, C
 local cfg = {
 	-- Builtin line number string options
 	thousands = false,
@@ -43,7 +42,7 @@ local function get_click_args(minwid, clicks, button, mods)
 		mousepos = f.getmousepos()
 	}
 	a.nvim_set_current_win(args.mousepos.winid)
-	a.nvim_win_set_cursor(0, {args.mousepos.line, 0})
+	a.nvim_win_set_cursor(0, { args.mousepos.line, 0 })
 	return args
 end
 
@@ -51,9 +50,9 @@ end
 local function get_fold_action(minwid, clicks, button, mods)
 	local args = get_click_args(minwid, clicks, button, mods)
 	local char = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
-	local fcs = Ol.fcs:get()
-	local type = char == (fcs.foldopen or "-") and "FoldOpen"
-							 or char == (fcs.foldclose or "+") and "FoldClose" or "FoldOther"
+	local fold = callargs[args.mousepos.winid].fold
+	local type = char == fold.open and "FoldOpen"
+			or char == fold.close and "FoldClose" or "FoldOther"
 	S(function() cfg.clickhandlers[type](args) end)
 end
 
@@ -61,7 +60,7 @@ end
 local function get_sign_action(minwid, clicks, button, mods)
 	local args = get_click_args(minwid, clicks, button, mods)
 	local sign = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
-	-- If clicked on empty space in the sign column, try one cell to the left
+	-- When empty space is clicked in the sign column, try one cell to the left
 	if sign == ' ' then
 		sign = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1)
 	end
@@ -81,37 +80,46 @@ local function get_lnum_action(minwid, clicks, button, mods)
 	S(function() cfg.clickhandlers.Lnum(args) end)
 end
 
--- Call argument if it is a function and return it's result or itself.
+--- If arg is a function call and return it, else return arg
 local function trycall(arg, win)
 	if type(arg) == "function" then return arg(callargs[win]) end
 	return arg
 end
 
-local function set_callargs(win)
-	callargs[win] = {
-		win = win,
-		wp = ffi.C.find_window_by_handle(win, error),
-		thousands = cfg.thousands,
-		culright = cfg.relculright,
-	}
-end
-
 --- Return 'statuscolumn' option value (%! item).
 local function get_statuscol_string()
 	local win = g.statusline_winid
-	if not callargs[win] then set_callargs(win) end
+	local args = callargs[win]
+	if not args then
+		args = { win = win, wp = C.find_window_by_handle(win, error), fold = {} }
+	end
+
+	local tick = C.display_tick
+	if not callargs[win] or args.tick < C.display_tick then
+		local fcs = Ol.fcs:get()
+		local buf = a.nvim_win_get_buf(win)
+		args.buf = buf
+		args.tick = tick
+		args.nu = a.nvim_win_get_option(win, "nu")
+		args.rnu = a.nvim_win_get_option(win, "rnu")
+		args.fold.sep = fcs.foldsep or "│"
+		args.fold.open = fcs.foldopen or "-"
+		args.fold.close = fcs.foldclose or "+"
+		callargs[win] = args
+	end
 
 	for i = 1, formatargcount do
 		formatargret[i] = trycall(formatargs[i][2], win) and trycall(formatargs[i][1], win) or ""
 	end
 
-	return format(formatstr, unpack(formatargret))
+	return formatstr:format(unpack(formatargret))
 end
 
 function M.setup(user)
 	ffi = require("statuscol.ffidef")
 	builtin = require("statuscol.builtin")
 	error = ffi.new("Error")
+	C = ffi.C
 
 	cfg.clickhandlers = {
 		Lnum                   = builtin.lnum_click,

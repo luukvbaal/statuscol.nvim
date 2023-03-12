@@ -91,11 +91,13 @@ local function get_statuscol_string()
 	local win = g.statusline_winid
 	local args = callargs[win]
 	if not args then
-		args = { win = win, wp = C.find_window_by_handle(win, error), fold = {} }
+		args = { win = win, wp = C.find_window_by_handle(win, error), fold = {}, tick = 0 }
+		callargs[win] = args
 	end
 
+	-- Update callargs once per window per redraw
 	local tick = C.display_tick
-	if not callargs[win] or args.tick < C.display_tick then
+	if args.tick < tick then
 		local fcs = Ol.fcs:get()
 		local buf = a.nvim_win_get_buf(win)
 		args.buf = buf
@@ -105,7 +107,6 @@ local function get_statuscol_string()
 		args.fold.sep = fcs.foldsep or "│"
 		args.fold.open = fcs.foldopen or "-"
 		args.fold.close = fcs.foldclose or "+"
-		callargs[win] = args
 	end
 
 	for i = 1, formatargcount do

@@ -3,14 +3,17 @@ local f = vim.fn
 local g = vim.g
 local o = vim.o
 local Ol = vim.opt_local
+local v = vim.v
 local S = vim.schedule
 local M = {}
-local signs = {}
 local callargs = {}
 local formatstr = ""
+local sign_cache = {}
 local formatargs = {}
 local formatargret = {}
 local formatargcount = 0
+local signsegments = {}
+local signsegmentcount = 0
 local builtin, ffi, error, C
 local cfg = {
 	-- Builtin line number string options
@@ -26,7 +29,19 @@ local cfg = {
 local function update_sign_defined()
 	for _, sign in ipairs(f.sign_getdefined()) do
 		if sign.text then
-			signs[sign.name] = sign.text:gsub("%s","")
+			local text = sign.text:gsub("%s","")
+			-- Strip whitespace for segments that should be single width
+			sign.texts = {}
+			for i = 1, signsegmentcount do
+				local ss = signsegments[i]
+				if ss.colwidth == 1 then
+					sign.texts[i] = text
+				else
+					sign.texts[i] = sign.text
+				end
+			end
+			sign.text = text
+			sign_cache[sign.name] = sign
 		end
 	end
 end
@@ -65,25 +80,35 @@ local function get_sign_action(minwid, clicks, button, mods)
 		sign = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1)
 	end
 
-	if not signs[sign] then update_sign_defined() end
-	for name, text in pairs(signs) do
-		if text == sign and cfg.clickhandlers[name] then
+	if not sign_cache[sign] then update_sign_defined() end
+	for name, s in pairs(sign_cache) do
+		if s.text == sign and cfg.clickhandlers[name] then
 			S(function() cfg.clickhandlers[name](args) end)
 			break
 		end
 	end
 end
 
+local function get_sign_text(_, fa)
+	local ss = fa.sign
+	local sss = ss.signs[v.lnum]
+	if not sss then return ss.empty end
+	local text = ""
+	local signcount = #sss
+	local idx = ss.idx
+	for i = 1, signcount do
+		local s = sss[i]
+		text = text.."%#"..s.texthl.."#"..s.texts[idx].."%*"
+	end
+	local pad = ss.padwidth - signcount
+	if pad > 0 then text = text..(" "):rep(pad * ss.colwidth) end
+	return text
+end
+
 --- Execute line number click callback.
 local function get_lnum_action(minwid, clicks, button, mods)
 	local args = get_click_args(minwid, clicks, button, mods)
 	S(function() cfg.clickhandlers.Lnum(args) end)
-end
-
---- If arg is a function call and return it, else return arg
-local function trycall(arg, win)
-	if type(arg) == "function" then return arg(callargs[win]) end
-	return arg
 end
 
 --- Return 'statuscolumn' option value (%! item).
@@ -107,10 +132,57 @@ local function get_statuscol_string()
 		args.fold.sep = fcs.foldsep or "│"
 		args.fold.open = fcs.foldopen or "-"
 		args.fold.close = fcs.foldclose or "+"
+		if signsegmentcount > 0 then
+			-- Retrieve signs for the entire buffer and store in "signsegments"
+			-- by line number. Only do this if a "signs" segment was configured.
+			local signs = f.sign_getplaced(buf, { group = "*" })[1].signs
+			local signcount = #signs
+			for i = 1, signsegmentcount do
+				local ss = signsegments[i]
+				ss.width = 0
+				ss.signs = {}
+				if signcount > 0 then
+					local sss = ss.signs
+					for j = 1, signcount do
+						local s = signs[j]
+						local width = (sss[s.lnum] and #sss[s.lnum] or 0) + 1
+						if not s.placed and width <= ss.maxwidth then
+							local notmatch = false
+							for k = 1, ss.notnamecount do
+								if s.name:find(ss.notname[k]) then
+									notmatch = true
+									break
+								end
+							end
+							if not notmatch then
+								for k = 1, ss.namecount do
+									if s.name:find(ss.name[k]) then
+										if not sign_cache[s.name] then update_sign_defined() end
+										if not sss[s.lnum] then sss[s.lnum] = {} end
+										if ss.width < width then ss.width = width end
+										sss[s.lnum][width] = sign_cache[s.name]
+										s.placed = true
+									end
+								end
+							end
+						end
+					end
+				end
+				if ss.auto then
+					ss.empty = (" "):rep(ss.width * ss.colwidth)
+					ss.padwidth = ss.width
+				end
+			end
+		end
 	end
 
 	for i = 1, formatargcount do
-		formatargret[i] = trycall(formatargs[i][2], win) and trycall(formatargs[i][1], win) or ""
+		local fa = formatargs[i]
+		if fa.cond == true or fa.cond(args) then
+			formatargret[i] = type(fa.text) == "string" and fa.text or fa.text(args, fa)
+		else
+			formatargret[i] = ""
+		end
 	end
 
 	return formatstr:format(unpack(formatargret))
@@ -159,8 +231,10 @@ function M.setup(user)
 	-- elements are evaluated each redraw.
 	for i = 1, #cfg.segments do
 		local segment = cfg.segments[i]
+		local ss = segment.sign
 		if segment.hl then formatstr = formatstr.."%%#"..segment.hl.."#" end
 		if segment.click then formatstr = formatstr.."%%@"..segment.click.."@" end
+		if ss then segment.text = { get_sign_text } end
 		for j = 1, #segment.text do
 			local condition = segment.condition and segment.condition[j]
 			if condition == nil then condition = true end
@@ -170,7 +244,22 @@ function M.setup(user)
 				if type(text) == "function" or type(condition) == "function" then
 					formatstr = formatstr.."%s"
 					formatargcount = formatargcount + 1
-					formatargs[formatargcount] = { text, condition }
+					formatargs[formatargcount] = {
+						text = text,
+						cond = condition,
+						sign = ss
+					}
+					if ss then
+						signsegmentcount = signsegmentcount + 1
+						signsegments[signsegmentcount] = ss
+						ss.namecount = #ss.name
+						ss.idx = signsegmentcount
+						ss.auto = ss.auto or false
+						ss.padwidth = ss.maxwidth or 1
+						ss.colwidth = ss.colwidth or 2
+						ss.empty = (" "):rep(ss.maxwidth * ss.colwidth)
+						o.signcolumn = "no"
+					end
 				else
 					formatstr = formatstr..text
 				end
@@ -178,6 +267,25 @@ function M.setup(user)
 		end
 		if segment.click then formatstr = formatstr.."%%T" end
 		if segment.hl then formatstr = formatstr.."%%*" end
+	end
+	-- For each sign segment, store the name patterns from other sign segments.
+	-- This list is used in get_statuscol_string() to make sure that signs that
+	-- have a dedicated segment do not get placed in a wildcard(".*") segment.
+	for i = 1, signsegmentcount do
+		local ss = signsegments[i]
+		ss.notname = {}
+		ss.notnamecount = 0
+		for j = 1, signsegmentcount do
+			if j ~= i then
+				local sso = signsegments[j]
+				for k = 1, #sso.name do
+					if sso.name[k] ~= ".*" then
+						ss.notname[#ss.notname + 1] = sso.name[k]
+						ss.notnamecount = ss.notnamecount + 1
+					end
+				end
+			end
+		end
 	end
 
 	_G.ScFa = get_fold_action

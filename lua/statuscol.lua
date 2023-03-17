@@ -40,6 +40,7 @@ local function update_sign_defined()
 					sign.texts[i] = sign.text
 				end
 			end
+			if not sign.texthl then sign.texthl = "SignColumn" end
 			sign.text = text
 			sign_cache[sign.name] = sign
 		end

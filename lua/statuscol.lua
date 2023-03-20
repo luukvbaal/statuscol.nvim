@@ -137,15 +137,14 @@ local function get_statuscol_string()
 		if signsegmentcount > 0 then
 			-- Retrieve signs for the entire buffer and store in "signsegments"
 			-- by line number. Only do this if a "signs" segment was configured.
-			local signs = f.sign_getplaced(buf, { group = "*" })[1].signs
-			local signcount = #signs
 			for i = 1, signsegmentcount do
 				local ss = signsegments[i]
 				ss.width = 0
 				ss.signs = {}
 			end
-			for j = 1, signcount do
-				local s = signs[j]
+			local signs = f.sign_getplaced(buf, { group = "*" })[1].signs
+			for i = 1, #signs do
+				local s = signs[i]
 				if not sign_cache[s.name] then update_sign_defined() end
 				local sign = sign_cache[s.name]
 				if not sign.segment then goto nextsign end
@@ -185,6 +184,7 @@ function M.setup(user)
 	builtin = require("statuscol.builtin")
 	error = ffi.new("Error")
 	C = ffi.C
+	if jit.os == "Windows" then C.display_tick = math.huge end
 
 	cfg.clickhandlers = {
 		Lnum                   = builtin.lnum_click,

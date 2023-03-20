@@ -101,7 +101,6 @@ local function get_sign_text(_, fa)
 	for i = 1, signcount do
 		local s = sss[i]
 		text = text.."%#"..s.texthl.."#"..s.text.."%*"
-		sss[i] = nil
 	end
 	local pad = ss.padwidth - signcount
 	if pad > 0 then text = text..(" "):rep(pad * ss.colwidth) end
@@ -138,11 +137,14 @@ local function get_statuscol_string()
 		if signsegmentcount > 0 then
 			-- Retrieve signs for the entire buffer and store in "signsegments"
 			-- by line number. Only do this if a "signs" segment was configured.
-			for i = 1, signsegmentcount do
-				signsegments[i].width = 0
-			end
 			local signs = f.sign_getplaced(buf, { group = "*" })[1].signs
-			for j = 1, #signs do
+			local signcount = #signs
+			for i = 1, signsegmentcount do
+				local ss = signsegments[i]
+				ss.width = 0
+				ss.signs = {}
+			end
+			for j = 1, signcount do
 				local s = signs[j]
 				if not sign_cache[s.name] then update_sign_defined() end
 				local sign = sign_cache[s.name]
@@ -242,7 +244,6 @@ function M.setup(user)
 					if ss then
 						signsegmentcount = signsegmentcount + 1
 						signsegments[signsegmentcount] = ss
-						ss.signs = {}
 						ss.namecount = #ss.name
 						ss.auto = ss.auto or false
 						ss.padwidth = ss.maxwidth or 1

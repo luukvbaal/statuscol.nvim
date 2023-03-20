@@ -27,22 +27,22 @@ local cfg = {
 
 --- Store defined signs without whitespace.
 local function update_sign_defined()
-	for _, sign in ipairs(f.sign_getdefined()) do
-		if sign.text then
-			local text = sign.text:gsub("%s","")
-			-- Strip whitespace for segments that should be single width
-			sign.texts = {}
+	for _, s in ipairs(f.sign_getdefined()) do
+		if s.text then
 			for i = 1, signsegmentcount do
 				local ss = signsegments[i]
-				if ss.colwidth == 1 then
-					sign.texts[i] = text
-				else
-					sign.texts[i] = sign.text
+				for j = 1, ss.notnamecount do
+					if s.name:find(ss.notname[j]) then goto nextsegment end
 				end
+				for j = 1, ss.namecount do
+					if s.name:find(ss.name[j]) then s.segment = i end
+				end
+				::nextsegment::
 			end
-			if not sign.texthl then sign.texthl = "SignColumn" end
-			sign.text = text
-			sign_cache[sign.name] = sign
+			s.wtext = s.text:gsub("%s","")
+			if not s.texthl then s.texthl = "SignColumn" end
+			if signsegments[s.segment].colwidth == 1 then s.text = s.wtext end
+			sign_cache[s.name] = s
 		end
 	end
 end
@@ -83,7 +83,7 @@ local function get_sign_action(minwid, clicks, button, mods)
 
 	if not sign_cache[sign] then update_sign_defined() end
 	for name, s in pairs(sign_cache) do
-		if s.text == sign and cfg.clickhandlers[name] then
+		if s.wtext == sign and cfg.clickhandlers[name] then
 			S(function() cfg.clickhandlers[name](args) end)
 			break
 		end
@@ -96,10 +96,9 @@ local function get_sign_text(_, fa)
 	if not sss then return ss.empty end
 	local text = ""
 	local signcount = #sss
-	local idx = ss.idx
 	for i = 1, signcount do
 		local s = sss[i]
-		text = text.."%#"..s.texthl.."#"..s.texts[idx].."%*"
+		text = text.."%#"..s.texthl.."#"..s.text.."%*"
 	end
 	local pad = ss.padwidth - signcount
 	if pad > 0 then text = text..(" "):rep(pad * ss.colwidth) end
@@ -142,33 +141,25 @@ local function get_statuscol_string()
 				local ss = signsegments[i]
 				ss.width = 0
 				ss.signs = {}
-				if signcount > 0 then
+			end
+			if signcount > 0 then
+				for j = 1, signcount do
+					local s = signs[j]
+					if not sign_cache[s.name] then update_sign_defined() end
+					local sign = sign_cache[s.name]
+					if not sign.segment then goto nextsign end
+					local ss = signsegments[sign.segment]
 					local sss = ss.signs
-					for j = 1, signcount do
-						local s = signs[j]
-						local width = (sss[s.lnum] and #sss[s.lnum] or 0) + 1
-						if not s.placed and width <= ss.maxwidth then
-							local notmatch = false
-							for k = 1, ss.notnamecount do
-								if s.name:find(ss.notname[k]) then
-									notmatch = true
-									break
-								end
-							end
-							if not notmatch then
-								for k = 1, ss.namecount do
-									if s.name:find(ss.name[k]) then
-										if not sign_cache[s.name] then update_sign_defined() end
-										if not sss[s.lnum] then sss[s.lnum] = {} end
-										if ss.width < width then ss.width = width end
-										sss[s.lnum][width] = sign_cache[s.name]
-										s.placed = true
-									end
-								end
-							end
-						end
-					end
+					local width = (sss[s.lnum] and #sss[s.lnum] or 0) + 1
+					if width > ss.maxwidth then goto nextsign end
+					if not sss[s.lnum] then sss[s.lnum] = {} end
+					if ss.width < width then ss.width = width end
+					sss[s.lnum][width] = sign_cache[s.name]
+					::nextsign::
 				end
+			end
+			for i = 1, signsegmentcount do
+				local ss = signsegments[i]
 				if ss.auto then
 					ss.empty = (" "):rep(ss.width * ss.colwidth)
 					ss.padwidth = ss.width
@@ -254,7 +245,6 @@ function M.setup(user)
 						signsegmentcount = signsegmentcount + 1
 						signsegments[signsegmentcount] = ss
 						ss.namecount = #ss.name
-						ss.idx = signsegmentcount
 						ss.auto = ss.auto or false
 						ss.padwidth = ss.maxwidth or 1
 						ss.colwidth = ss.colwidth or 2

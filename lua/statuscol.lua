@@ -101,6 +101,7 @@ local function get_sign_text(_, fa)
 	for i = 1, signcount do
 		local s = sss[i]
 		text = text.."%#"..s.texthl.."#"..s.text.."%*"
+		sss[i] = nil
 	end
 	local pad = ss.padwidth - signcount
 	if pad > 0 then text = text..(" "):rep(pad * ss.colwidth) end
@@ -137,28 +138,23 @@ local function get_statuscol_string()
 		if signsegmentcount > 0 then
 			-- Retrieve signs for the entire buffer and store in "signsegments"
 			-- by line number. Only do this if a "signs" segment was configured.
-			local signs = f.sign_getplaced(buf, { group = "*" })[1].signs
-			local signcount = #signs
 			for i = 1, signsegmentcount do
-				local ss = signsegments[i]
-				ss.width = 0
-				ss.signs = {}
+				signsegments[i].width = 0
 			end
-			if signcount > 0 then
-				for j = 1, signcount do
-					local s = signs[j]
-					if not sign_cache[s.name] then update_sign_defined() end
-					local sign = sign_cache[s.name]
-					if not sign.segment then goto nextsign end
-					local ss = signsegments[sign.segment]
-					local sss = ss.signs
-					local width = (sss[s.lnum] and #sss[s.lnum] or 0) + 1
-					if width > ss.maxwidth then goto nextsign end
-					if not sss[s.lnum] then sss[s.lnum] = {} end
-					if ss.width < width then ss.width = width end
-					sss[s.lnum][width] = sign_cache[s.name]
-					::nextsign::
-				end
+			local signs = f.sign_getplaced(buf, { group = "*" })[1].signs
+			for j = 1, #signs do
+				local s = signs[j]
+				if not sign_cache[s.name] then update_sign_defined() end
+				local sign = sign_cache[s.name]
+				if not sign.segment then goto nextsign end
+				local ss = signsegments[sign.segment]
+				local sss = ss.signs
+				local width = (sss[s.lnum] and #sss[s.lnum] or 0) + 1
+				if width > ss.maxwidth then goto nextsign end
+				if not sss[s.lnum] then sss[s.lnum] = {} end
+				if ss.width < width then ss.width = width end
+				sss[s.lnum][width] = sign_cache[s.name]
+				::nextsign::
 			end
 			for i = 1, signsegmentcount do
 				local ss = signsegments[i]
@@ -246,6 +242,7 @@ function M.setup(user)
 					if ss then
 						signsegmentcount = signsegmentcount + 1
 						signsegments[signsegmentcount] = ss
+						ss.signs = {}
 						ss.namecount = #ss.name
 						ss.auto = ss.auto or false
 						ss.padwidth = ss.maxwidth or 1

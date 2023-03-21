@@ -303,8 +303,16 @@ function M.setup(user)
 
 	if cfg.ft_ignore then
 		a.nvim_create_autocmd("FileType", { pattern = cfg.ft_ignore, group = id,
-			command = "set statuscolumn="
+			command = "setl statuscolumn="
 		})
+	end
+
+	if cfg.bt_ignore then
+		a.nvim_create_autocmd("OptionSet", { pattern = "buftype", group = id, callback = function()
+			if vim.tbl_contains(cfg.bt_ignore, a.nvim_buf_get_option(0, "buftype")) then
+				Ol.statuscolumn = ""
+			end
+		end })
 	end
 end
 

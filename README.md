@@ -44,6 +44,7 @@ local cfg = {
   -- Builtin 'statuscolumn' options
   setopt = true,         -- whether to set the 'statuscolumn', providing builtin click actions
   ft_ignore = nil,       -- lua table with filetypes for which 'statuscolumn' will be unset
+  bt_ignore = nil,       -- lua table with 'buftype' values for which 'statuscolumn' will be unset
   -- Default segments (fold -> sign -> line number + separator)
   segments = {
     { text = { "%C" }, click = "v:lua.ScFa" },

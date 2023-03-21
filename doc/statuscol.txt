@@ -172,11 +172,12 @@ the actions you want to overwrite to the `setup()` function:
       ---   mousepos = f.getmousepos()  -- getmousepos() table, containing clicked line number/window id etc.
       --- }
       clickhandlers = {
+        FoldOther = false,  -- Disable builtin clickhandler
         Lnum = function(args)
           if args.button == "l" and args.mods:find("c") then
             print("I Ctrl-left clicked on line "..args.mousepos.line)
           end
-        end
+        end,
       }
     }
     

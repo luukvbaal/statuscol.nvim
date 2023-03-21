@@ -64,6 +64,11 @@ local function get_click_args(minwid, clicks, button, mods)
 	return args
 end
 
+local function call_click_func(name, args)
+	local handler = cfg.clickhandlers[name]
+	if handler then S(function() handler(args) end) end
+end
+
 --- Execute fold column click callback.
 local function get_fold_action(minwid, clicks, button, mods)
 	local args = get_click_args(minwid, clicks, button, mods)
@@ -71,7 +76,7 @@ local function get_fold_action(minwid, clicks, button, mods)
 	local fold = callargs[args.mousepos.winid].fold
 	local type = char == fold.open and "FoldOpen"
 			or char == fold.close and "FoldClose" or "FoldOther"
-	S(function() cfg.clickhandlers[type](args) end)
+	call_click_func(type, args)
 end
 
 --- Execute sign column click callback.
@@ -85,8 +90,8 @@ local function get_sign_action(minwid, clicks, button, mods)
 
 	if not sign_cache[sign] then update_sign_defined() end
 	for name, s in pairs(sign_cache) do
-		if s.wtext == sign and cfg.clickhandlers[name] then
-			S(function() cfg.clickhandlers[name](args) end)
+		if s.wtext == sign then
+			call_click_func(name, args)
 			break
 		end
 	end
@@ -110,7 +115,7 @@ end
 --- Execute line number click callback.
 local function get_lnum_action(minwid, clicks, button, mods)
 	local args = get_click_args(minwid, clicks, button, mods)
-	S(function() cfg.clickhandlers.Lnum(args) end)
+	call_click_func("Lnum", args)
 end
 
 --- Return 'statuscolumn' option value (%! item).
@@ -271,8 +276,8 @@ function M.setup(user)
 				local sso = signsegments[j]
 				for k = 1, #sso.name do
 					if sso.name[k] ~= ".*" then
-						ss.notname[#ss.notname + 1] = sso.name[k]
 						ss.notnamecount = ss.notnamecount + 1
+						ss.notname[ss.notnamecount] = sso.name[k]
 					end
 				end
 			end

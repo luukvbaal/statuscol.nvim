@@ -206,6 +206,7 @@ function M.setup(user)
 		GitSignsTopdelete      = builtin.gitsigns_click,
 		GitSignsUntracked      = builtin.gitsigns_click,
 		GitSignsAdd            = builtin.gitsigns_click,
+		GitSignsChange         = builtin.gitsigns_click,
 		GitSignsChangedelete   = builtin.gitsigns_click,
 		GitSignsDelete         = builtin.gitsigns_click,
 	}

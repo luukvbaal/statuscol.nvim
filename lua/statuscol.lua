@@ -303,7 +303,7 @@ function M.setup(user)
 	end
 
 	if cfg.ft_ignore then
-		a.nvim_create_autocmd({ "FileType", "WinEnter" }, { group = id, callback = function()
+		a.nvim_create_autocmd({ "FileType", "BufEnter" }, { group = id, callback = function()
 			if vim.tbl_contains(cfg.ft_ignore, a.nvim_buf_get_option(0, "filetype")) then
 				Ol.statuscolumn = ""
 			end

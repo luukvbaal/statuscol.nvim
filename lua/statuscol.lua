@@ -39,12 +39,12 @@ local function update_sign_defined()
 				end
 				::nextsegment::
 			end
-			sign_cache[s.name] = s
-			if s.segment then
-				s.wtext = s.text:gsub("%s","")
-				if not s.texthl then s.texthl = "SignColumn" end
-				if signsegments[s.segment].colwidth == 1 then s.text = s.wtext end
-			end
+		end
+		sign_cache[s.name] = s
+		if s.segment then
+			s.wtext = s.text:gsub("%s","")
+			if not s.texthl then s.texthl = "SignColumn" end
+			if signsegments[s.segment].colwidth == 1 then s.text = s.wtext end
 		end
 	end
 end

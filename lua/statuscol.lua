@@ -43,7 +43,7 @@ local function update_sign_defined()
 		sign_cache[s.name] = s
 		if s.segment then
 			s.wtext = s.text:gsub("%s","")
-			if not s.texthl then s.texthl = "SignColumn" end
+			if not s.texthl then s.texthl = "NoTexthl" end
 			if signsegments[s.segment].colwidth == 1 then s.text = s.wtext end
 		end
 	end
@@ -100,7 +100,7 @@ end
 local function get_sign_text(_, fa)
 	local ss = fa.sign
 	local sss = ss.signs[v.lnum]
-	if not sss then return ss.empty end
+	if not sss then return "%#SignColumn#"..ss.empty.."%*" end
 	local text = ""
 	local signcount = #sss
 	for i = 1, signcount do
@@ -108,7 +108,9 @@ local function get_sign_text(_, fa)
 		text = text.."%#"..s.texthl.."#"..s.text.."%*"
 	end
 	local pad = ss.padwidth - signcount
-	if pad > 0 then text = text..(" "):rep(pad * ss.colwidth) end
+	if pad > 0 then
+		text = text.."%#SignColumn#"..(" "):rep(pad * ss.colwidth).."%*"
+	end
 	return text
 end
 
@@ -268,21 +270,24 @@ function M.setup(user)
 	-- For each sign segment, store the name patterns from other sign segments.
 	-- This list is used in get_statuscol_string() to make sure that signs that
 	-- have a dedicated segment do not get placed in a wildcard(".*") segment.
-	for i = 1, signsegmentcount do
-		local ss = signsegments[i]
-		ss.notname = {}
-		ss.notnamecount = 0
-		for j = 1, signsegmentcount do
-			if j ~= i then
-				local sso = signsegments[j]
-				for k = 1, #sso.name do
-					if sso.name[k] ~= ".*" then
-						ss.notnamecount = ss.notnamecount + 1
-						ss.notname[ss.notnamecount] = sso.name[k]
+	if signsegmentcount > 0 then
+		for i = 1, signsegmentcount do
+			local ss = signsegments[i]
+			ss.notname = {}
+			ss.notnamecount = 0
+			for j = 1, signsegmentcount do
+				if j ~= i then
+					local sso = signsegments[j]
+					for k = 1, #sso.name do
+						if sso.name[k] ~= ".*" then
+							ss.notnamecount = ss.notnamecount + 1
+							ss.notname[ss.notnamecount] = sso.name[k]
+						end
 					end
 				end
 			end
 		end
+		vim.cmd.highlight("NoTexthl guifg=NONE")
 	end
 
 	_G.ScFa = get_fold_action

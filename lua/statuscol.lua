@@ -188,6 +188,13 @@ local function get_statuscol_string()
 end
 
 function M.setup(user)
+	local ok = pcall(a.nvim_win_get_option, 0, "statuscolumn")
+	if not ok then
+		vim.notify([[statuscol.nvim requires a neovim version that includes the 'statuscolumn' option.
+Please update to the latest nightly or build from source.]], vim.log.levels.WARN)
+	return
+	end
+
 	ffi = require("statuscol.ffidef")
 	builtin = require("statuscol.builtin")
 	error = ffi.new("Error")
@@ -268,7 +275,7 @@ function M.setup(user)
 		if segment.hl then formatstr = formatstr.."%%*" end
 	end
 	-- For each sign segment, store the name patterns from other sign segments.
-	-- This list is used in get_statuscol_string() to make sure that signs that
+	-- This list is used in update_sign_defined() to make sure that signs that
 	-- have a dedicated segment do not get placed in a wildcard(".*") segment.
 	if signsegmentcount > 0 then
 		for i = 1, signsegmentcount do
@@ -309,7 +316,7 @@ function M.setup(user)
 
 	if cfg.ft_ignore then
 		a.nvim_create_autocmd({ "FileType", "BufEnter" }, { group = id, callback = function()
-			if vim.tbl_contains(cfg.ft_ignore, a.nvim_buf_get_option(0, "filetype")) then
+			if vim.tbl_contains(cfg.ft_ignore, a.nvim_buf_get_option(0, "ft")) then
 				Ol.statuscolumn = ""
 			end
 		end })
@@ -317,7 +324,7 @@ function M.setup(user)
 
 	if cfg.bt_ignore then
 		a.nvim_create_autocmd("OptionSet", { pattern = "buftype", group = id, callback = function()
-			if vim.tbl_contains(cfg.bt_ignore, a.nvim_buf_get_option(0, "buftype")) then
+			if vim.tbl_contains(cfg.bt_ignore, a.nvim_buf_get_option(0, "bt")) then
 				Ol.statuscolumn = ""
 			end
 		end })

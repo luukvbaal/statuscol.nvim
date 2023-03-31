@@ -3,8 +3,8 @@ local f = vim.fn
 local g = vim.g
 local o = vim.o
 local Ol = vim.opt_local
-local v = vim.v
 local S = vim.schedule
+local contains = vim.tbl_contains
 local M = {}
 local callargs = {}
 local formatstr = ""
@@ -14,7 +14,7 @@ local formatargret = {}
 local formatargcount = 0
 local signsegments = {}
 local signsegmentcount = 0
-local builtin, ffi, error, C
+local builtin, ffi, error, C, lnumfunc
 local cfg = {
 	-- Builtin line number string options
 	thousands = false,
@@ -88,30 +88,12 @@ local function get_sign_action(minwid, clicks, button, mods)
 		sign = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1)
 	end
 
-	if not sign_cache[sign] then update_sign_defined() end
 	for name, s in pairs(sign_cache) do
 		if s.wtext == sign then
 			call_click_func(name, args)
 			break
 		end
 	end
-end
-
-local function get_sign_text(_, fa)
-	local ss = fa.sign
-	local sss = ss.signs[v.lnum]
-	if not sss then return "%#SignColumn#"..ss.empty.."%*" end
-	local text = ""
-	local signcount = #sss
-	for i = 1, signcount do
-		local s = sss[i]
-		text = text.."%#"..s.texthl.."#"..s.text.."%*"
-	end
-	local pad = ss.padwidth - signcount
-	if pad > 0 then
-		text = text.."%#SignColumn#"..(" "):rep(pad * ss.colwidth).."%*"
-	end
-	return text
 end
 
 --- Execute line number click callback.
@@ -138,10 +120,11 @@ local function get_statuscol_string()
 		args.tick = tick
 		args.nu = a.nvim_win_get_option(win, "nu")
 		args.rnu = a.nvim_win_get_option(win, "rnu")
+		args.sclnu = lnumfunc and a.nvim_win_get_option(win, "scl"):find("nu")
 		args.fold.sep = fcs.foldsep or "│"
 		args.fold.open = fcs.foldopen or "-"
 		args.fold.close = fcs.foldclose or "+"
-		if signsegmentcount > 0 then
+		if signsegmentcount - ((lnumfunc and not args.sclnu) and 1 or 0) > 0 then
 			-- Retrieve signs for the entire buffer and store in "signsegments"
 			-- by line number. Only do this if a "signs" segment was configured.
 			local signs = f.sign_getplaced(buf, { group = "*" })[1].signs
@@ -238,10 +221,26 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 	-- elements are evaluated each redraw.
 	for i = 1, #cfg.segments do
 		local segment = cfg.segments[i]
+		if segment.text and contains(segment.text, builtin.lnumfunc) then
+			lnumfunc = true
+			segment.sign = segment.sign or { name = { ".*" } }
+		end
 		local ss = segment.sign
+		if ss then
+			signsegmentcount = signsegmentcount + 1
+			signsegments[signsegmentcount] = ss
+			ss.namecount = #ss.name
+			ss.auto = ss.auto or false
+			ss.maxwidth = ss.maxwidth or 1
+			ss.colwidth = ss.colwidth or 2
+			ss.padwidth = ss.maxwidth
+			ss.empty = (" "):rep(ss.maxwidth * ss.colwidth)
+			local scl = o.scl
+			if scl ~= "number" and scl ~= "no" then o.scl = "no" end
+			if not segment.text then segment.text = { builtin.signfunc } end
+		end
 		if segment.hl then formatstr = formatstr.."%%#"..segment.hl.."#" end
 		if segment.click then formatstr = formatstr.."%%@"..segment.click.."@" end
-		if ss then segment.text = { get_sign_text } end
 		for j = 1, #segment.text do
 			local condition = segment.condition and segment.condition[j]
 			if condition == nil then condition = true end
@@ -256,16 +255,6 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 						cond = condition,
 						sign = ss
 					}
-					if ss then
-						signsegmentcount = signsegmentcount + 1
-						signsegments[signsegmentcount] = ss
-						ss.namecount = #ss.name
-						ss.auto = ss.auto or false
-						ss.padwidth = ss.maxwidth or 1
-						ss.colwidth = ss.colwidth or 2
-						ss.empty = (" "):rep(ss.maxwidth * ss.colwidth)
-						o.signcolumn = "no"
-					end
 				else
 					formatstr = formatstr..text
 				end
@@ -294,7 +283,7 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 				end
 			end
 		end
-		vim.cmd.highlight("NoTexthl guifg=NONE")
+		a.nvim_set_hl(0, "NoTexthl", { fg = "NONE" })
 	end
 
 	_G.ScFa = get_fold_action
@@ -316,7 +305,7 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 
 	if cfg.ft_ignore then
 		a.nvim_create_autocmd({ "FileType", "BufEnter" }, { group = id, callback = function()
-			if vim.tbl_contains(cfg.ft_ignore, a.nvim_buf_get_option(0, "ft")) then
+			if contains(cfg.ft_ignore, a.nvim_buf_get_option(0, "ft")) then
 				Ol.statuscolumn = ""
 			end
 		end })
@@ -324,7 +313,7 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 
 	if cfg.bt_ignore then
 		a.nvim_create_autocmd("OptionSet", { pattern = "buftype", group = id, callback = function()
-			if vim.tbl_contains(cfg.bt_ignore, a.nvim_buf_get_option(0, "bt")) then
+			if contains(cfg.bt_ignore, a.nvim_buf_get_option(0, "bt")) then
 				Ol.statuscolumn = ""
 			end
 		end })

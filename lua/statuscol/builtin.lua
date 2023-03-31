@@ -8,7 +8,10 @@ local foldmarker, thou, culright, ffi, C
 local M = {}
 
 --- Return line number in configured format.
-function M.lnumfunc(args)
+function M.lnumfunc(args, fa)
+	if args.sclnu and fa.sign and fa.sign.signs[v.lnum] then
+		return "%="..M.signfunc(_, fa)
+	end
 	if not args.rnu and not args.nu then return "" end
 	if v.virtnum ~= 0 then return "%=" end
 
@@ -59,7 +62,25 @@ function M.foldfunc(args)
 	return string.."%*"
 end
 
--- Return true if the statuscolumn is not empty.
+--- Return sign column in configured format.
+function M.signfunc(_, formatarg)
+	local ss = formatarg.sign
+	local sss = ss.signs[v.lnum]
+	if not sss then return "%#SignColumn#"..ss.empty.."%*" end
+	local text = ""
+	local signcount = #sss
+	for i = 1, signcount do
+		local s = sss[i]
+		text = text.."%#"..s.texthl.."#"..s.text.."%*"
+	end
+	local pad = ss.padwidth - signcount
+	if pad > 0 then
+		text = text.."%#SignColumn#"..(" "):rep(pad * ss.colwidth).."%*"
+	end
+	return text
+end
+
+--- Return true if the statuscolumn is not empty.
 function M.not_empty(args)
 	return C.win_col_off(args.wp) > 0
 end

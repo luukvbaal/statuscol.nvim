@@ -236,7 +236,7 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 			ss.colwidth = ss.colwidth or 2
 			ss.padwidth = ss.maxwidth
 			ss.empty = (" "):rep(ss.maxwidth * ss.colwidth)
-			setscl = true
+			if setscl ~= false then setscl = true end
 			if not segment.text then segment.text = { builtin.signfunc } end
 		end
 		if segment.hl then formatstr = formatstr.."%%#"..segment.hl.."#" end

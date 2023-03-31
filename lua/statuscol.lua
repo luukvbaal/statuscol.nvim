@@ -219,6 +219,7 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 	-- To improve performance of the 'statuscolumn' evaluation, we parse the
 	-- "segments" here and convert it to a format string. Only the variable
 	-- elements are evaluated each redraw.
+	local setscl
 	for i = 1, #cfg.segments do
 		local segment = cfg.segments[i]
 		if segment.text and contains(segment.text, builtin.lnumfunc) then
@@ -235,8 +236,7 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 			ss.colwidth = ss.colwidth or 2
 			ss.padwidth = ss.maxwidth
 			ss.empty = (" "):rep(ss.maxwidth * ss.colwidth)
-			local scl = o.scl
-			if scl ~= "number" and scl ~= "no" then o.scl = "no" end
+			setscl = true
 			if not segment.text then segment.text = { builtin.signfunc } end
 		end
 		if segment.hl then formatstr = formatstr.."%%#"..segment.hl.."#" end
@@ -246,7 +246,10 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 			if condition == nil then condition = true end
 			if condition then
 				local text = segment.text[j]
-				if type(text) == "string" then text = text:gsub("%%", "%%%%") end
+				if type(text) == "string" then
+					if text:find("%s") then setscl = false end
+					text = text:gsub("%%", "%%%%")
+				end
 				if type(text) == "function" or type(condition) == "function" then
 					formatstr = formatstr.."%s"
 					formatargcount = formatargcount + 1
@@ -263,6 +266,7 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 		if segment.click then formatstr = formatstr.."%%T" end
 		if segment.hl then formatstr = formatstr.."%%*" end
 	end
+	if setscl and o.scl ~= "number" then o.scl = "no" end
 	-- For each sign segment, store the name patterns from other sign segments.
 	-- This list is used in update_sign_defined() to make sure that signs that
 	-- have a dedicated segment do not get placed in a wildcard(".*") segment.

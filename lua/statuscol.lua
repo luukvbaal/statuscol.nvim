@@ -247,7 +247,7 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 			if condition then
 				local text = segment.text[j]
 				if type(text) == "string" then
-					if text:find("%s") then setscl = false end
+					if text:find("%%s") then setscl = false end
 					text = text:gsub("%%", "%%%%")
 				end
 				if type(text) == "function" or type(condition) == "function" then

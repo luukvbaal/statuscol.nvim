@@ -85,6 +85,7 @@ local function get_sign_action_inner(args)
 	if sign == ' ' then
 		sign = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1)
 	end
+	if not sign_cache[sign] then update_sign_defined() end
 
 	for name, s in pairs(sign_cache) do
 		if s.wtext == sign then

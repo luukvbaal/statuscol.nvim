@@ -31,6 +31,7 @@ local function update_sign_defined()
 		if s.text then
 			for i = 1, signsegmentcount do
 				local ss = signsegments[i]
+				if ss.lnum and not ss.sclnu then goto nextsegment end
 				for j = 1, ss.notnamecount do
 					if s.name:find(ss.notname[j]) then goto nextsegment end
 				end
@@ -148,6 +149,10 @@ local function get_statuscol_string()
 			local signcount = #signs
 			for i = 1, signsegmentcount do
 				local ss = signsegments[i]
+				if ss.lnum and args.sclnu ~= ss.sclnu then
+					ss.sclnu = args.sclnu
+					update_sign_defined()
+				end
 				ss.width = 0
 				ss.signs = {}
 			end
@@ -241,7 +246,7 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 		local segment = cfg.segments[i]
 		if segment.text and contains(segment.text, builtin.lnumfunc) then
 			lnumfunc = true
-			segment.sign = segment.sign or { name = { ".*" } }
+			segment.sign = segment.sign or { name = { ".*" }, lnum = true }
 		end
 		local ss = segment.sign
 		if ss then

@@ -35,11 +35,15 @@ local function update_sign_defined()
 					if s.name:find(ss.notname[j]) then goto nextsegment end
 				end
 				for j = 1, ss.namecount do
-					if s.name:find(ss.name[j]) then s.segment = i end
+					if s.name:find(ss.name[j]) then
+						s.segment = i
+						goto nextsign
+					end
 				end
 				::nextsegment::
 			end
 		end
+		::nextsign::
 		sign_cache[s.name] = s
 		if s.segment then
 			s.wtext = s.text:gsub("%s","")

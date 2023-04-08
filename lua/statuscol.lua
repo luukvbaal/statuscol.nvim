@@ -173,7 +173,7 @@ local function get_statuscol_string()
 			for i = 1, signsegmentcount do
 				local ss = signsegments[i]
 				if ss.auto then
-					ss.empty = (" "):rep(ss.width * ss.colwidth)
+					ss.empty = ss.fillchar:rep(ss.width * ss.colwidth)
 					ss.padwidth = ss.width
 				end
 			end
@@ -257,7 +257,8 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 			ss.maxwidth = ss.maxwidth or 1
 			ss.colwidth = ss.colwidth or 2
 			ss.padwidth = ss.maxwidth
-			ss.empty = (" "):rep(ss.maxwidth * ss.colwidth)
+			ss.fillchar = ss.fillchar or " "
+			ss.empty = ss.fillchar:rep(ss.maxwidth * ss.colwidth)
 			if setscl ~= false then setscl = true end
 			if not segment.text then segment.text = { builtin.signfunc } end
 		end

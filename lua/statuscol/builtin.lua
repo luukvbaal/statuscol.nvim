@@ -75,7 +75,7 @@ function M.signfunc(_, formatarg)
 	end
 	local pad = ss.padwidth - signcount
 	if pad > 0 then
-		text = text.."%#SignColumn#"..(" "):rep(pad * ss.colwidth).."%*"
+		text = text.."%#SignColumn#"..ss.fillchar:rep(pad * ss.colwidth).."%*"
 	end
 	return text
 end

@@ -111,6 +111,7 @@ Each segment can contain the following elements:
     colwidth = 2,       -- number of display cells per sign in this segment
     auto = false,       -- when true, the segment will not be drawn if no signs matching
                         -- the pattern are currently placed in the buffer.
+    fillchar = " ",     -- character used to fill a segment with less signs than maxwidth
   }
 }
 ```

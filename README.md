@@ -33,6 +33,7 @@ For example with lazy.nvim:
       --   },
       -- }
     })
+  end,
 }
 ```
 

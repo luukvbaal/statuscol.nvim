@@ -203,16 +203,16 @@ Below follows a list of builtin click actions.
 |Sign|Button|Modifier|Action|
 |----|------|--------|------|
 |Lnum|Left||Toggle DAP breakpoint|
-|Lnum|Left|<kbd>Ctrl</kbd>|Toggle DAP conditional breakpoint|
+|Lnum|Left|<kbd>clickmod</kbd>|Toggle DAP conditional breakpoint|
 |Lnum|Middle||Yank line|
 |Lnum|Right||Paste line|
 |Lnum|Right x2||Delete line|
 |FoldClose|Left||Open fold|
-|FoldClose|Left|<kbd>Ctrl</kbd>|Open fold recursively|
+|FoldClose|Left|<kbd>clickmod</kbd>|Open fold recursively|
 |FoldOpen|Left||Close fold|
-|FoldOpen|Left|<kbd>Ctrl</kbd>|Close fold recursively|
+|FoldOpen|Left|<kbd>clickmod</kbd>|Close fold recursively|
 |FoldClose/Other|Right||Delete fold|
-|FoldClose/Other|Right|<kbd>Ctrl</kbd>|Delete fold recursively|
+|FoldClose/Other|Right|<kbd>clickmod</kbd>|Delete fold recursively|
 |Fold*|Middle||Create fold in range(click twice)|
 |Diagnostic*|Left||Open diagnostic float|
 |Diagnostic*|Middle||Select available code action|

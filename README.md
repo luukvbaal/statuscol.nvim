@@ -71,6 +71,8 @@ local cfg = {
       click = "v:lua.ScLa",
     }
   },
+  clickmod = "c",         -- modifier used for certain actions in the builtin clickhandlers:
+                          -- "a" for Alt, "c" for Ctrl and "m" for Meta.
   clickhandlers = {       -- builtin click handlers
     Lnum                   = builtin.lnum_click,
     FoldClose              = builtin.foldclose_click,
@@ -89,7 +91,7 @@ local cfg = {
     GitSignsChange         = builtin.gitsigns_click,
     GitSignsChangedelete   = builtin.gitsigns_click,
     GitSignsDelete         = builtin.gitsigns_click,
-  }
+  },
 }
 ```
 

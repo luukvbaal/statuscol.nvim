@@ -22,6 +22,7 @@ local cfg = {
 	-- Builtin 'statuscolumn' options
 	setopt = true,
 	ft_ignore = nil,
+	clickmod = "c",
 	clickhandlers = {},
 }
 

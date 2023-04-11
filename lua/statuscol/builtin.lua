@@ -4,7 +4,7 @@ local l = vim.lsp
 local npc = vim.F.npcall
 local v = vim.v
 local reverse = string.reverse
-local foldmarker, thou, culright, ffi, C
+local foldmarker, thou, culright, ffi, C, clickmod
 local M = {}
 
 --- Return line number in configured format.
@@ -103,14 +103,14 @@ local function fold_click(args, open, other)
 	end
 	foldmarker = nil
 
-	if args.button == "l" then  -- Open/Close (recursive) fold on (Ctrl)-click
+	if args.button == "l" then  -- Open/Close (recursive) fold on (clickmod)-click
 		if open then
-			c("norm! z"..(args.mods:find("c") and "O" or "o"))
+			c("norm! z"..(args.mods:find(clickmod) and "O" or "o"))
 		else
-			c("norm! z"..(args.mods:find("c") and "C" or "c"))
+			c("norm! z"..(args.mods:find(clickmod) and "C" or "c"))
 		end
-	elseif args.button == "r" then  -- Delete (recursive) fold on (Ctrl)-right click
-		c("norm! z"..(args.mods:find("c") and "D" or "d"))
+	elseif args.button == "r" then  -- Delete (recursive) fold on (clickmod)-right click
+		c("norm! z"..(args.mods:find(clickmod) and "D" or "d"))
 	end
 end
 
@@ -153,7 +153,7 @@ end
 function M.toggle_breakpoint(args)
 	local dap = npc(require, "dap")
 	if not dap then return end
-	if args.mods:find("c") then
+	if args.mods:find(clickmod) then
 		vim.ui.input({ prompt = "Breakpoint condition: " }, function(input)
 			dap.set_breakpoint(input)
 		end)
@@ -165,7 +165,7 @@ end
 --- Handler for clicking the line number.
 function M.lnum_click(args)
 	if args.button == "l" then
-		-- Toggle DAP (conditional) breakpoint on (Ctrl-)left click
+		-- Toggle DAP (conditional) breakpoint on (clickmod)left click
 		M.toggle_breakpoint(args)
 	elseif args.button == "m" then
 		c("norm! yy")  -- Yank on middle click
@@ -181,6 +181,7 @@ end
 function M.init(cfg)
 	thou = cfg.thousands
 	culright = cfg.relculright
+	clickmod = cfg.clickmod
 	ffi = require("statuscol.ffidef")
 	C = ffi.C
 end

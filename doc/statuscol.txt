@@ -197,16 +197,16 @@ builtin click actions. **Sign/click action pair suggestions are welcome!**
   Sign              Button     Modifier   Action
   ----------------- ---------- ---------- -----------------------------------
   Lnum              Left                  Toggle DAP breakpoint
-  Lnum              Left       Ctrl       Toggle DAP conditional breakpoint
+  Lnum              Left       clickmod   Toggle DAP conditional breakpoint
   Lnum              Middle                Yank line
   Lnum              Right                 Paste line
   Lnum              Right x2              Delete line
   FoldClose         Left                  Open fold
-  FoldClose         Left       Ctrl       Open fold recursively
+  FoldClose         Left       clickmod   Open fold recursively
   FoldOpen          Left                  Close fold
-  FoldOpen          Left       Ctrl       Close fold recursively
+  FoldOpen          Left       clickmod   Close fold recursively
   FoldClose/Other   Right                 Delete fold
-  FoldClose/Other   Right      Ctrl       Delete fold recursively
+  FoldClose/Other   Right      clickmod   Delete fold recursively
   Fold*             Middle                Create fold in range(click twice)
   Diagnostic*       Left                  Open diagnostic float
   Diagnostic*       Middle                Select available code action

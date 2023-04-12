@@ -128,6 +128,12 @@ local function get_statuscol_string()
 	if not args then
 		args = { win = win, wp = C.find_window_by_handle(win, error), fold = {}, tick = 0 }
 		callargs[win] = args
+		for i = 1, signsegmentcount do
+			local ss = signsegments[i]
+			ss.wins[win] = {}
+			ss.wins[win].padwidth = ss.maxwidth
+			ss.wins[win].empty = ss.fillchar:rep(ss.maxwidth * ss.colwidth)
+		end
 	end
 
 	-- Update callargs once per window per redraw
@@ -150,32 +156,35 @@ local function get_statuscol_string()
 			local signcount = #signs
 			for i = 1, signsegmentcount do
 				local ss = signsegments[i]
-				if ss.lnum and args.sclnu ~= ss.sclnu then
-					ss.sclnu = args.sclnu
+				local wss = ss.wins[win]
+				if ss.lnum and args.sclnu ~= wss.sclnu then
+					wss.sclnu = args.sclnu
 					update_sign_defined()
 				end
-				ss.width = 0
-				ss.signs = {}
+				wss.width = 0
+				wss.signs = {}
 			end
-			for j = 1, signcount do
-				local s = signs[j]
+			for i = 1, signcount do
+				local s = signs[i]
 				if not sign_cache[s.name] then update_sign_defined() end
 				local sign = sign_cache[s.name]
 				if not sign.segment then goto nextsign end
 				local ss = signsegments[sign.segment]
-				local sss = ss.signs
+				local wss = ss.wins[win]
+				local sss = wss.signs
 				local width = (sss[s.lnum] and #sss[s.lnum] or 0) + 1
 				if width > ss.maxwidth then goto nextsign end
 				if not sss[s.lnum] then sss[s.lnum] = {} end
-				if ss.width < width then ss.width = width end
+				if wss.width < width then wss.width = width end
 				sss[s.lnum][width] = sign_cache[s.name]
 				::nextsign::
 			end
 			for i = 1, signsegmentcount do
 				local ss = signsegments[i]
+				local wss = ss.wins[win]
 				if ss.auto then
-					ss.empty = ss.fillchar:rep(ss.width * ss.colwidth)
-					ss.padwidth = ss.width
+					wss.empty = ss.fillchar:rep(wss.width * ss.colwidth)
+					wss.padwidth = ss.wins[win].width
 				end
 			end
 		end
@@ -254,12 +263,11 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 			signsegmentcount = signsegmentcount + 1
 			signsegments[signsegmentcount] = ss
 			ss.namecount = #ss.name
+			ss.wins = {}
 			ss.auto = ss.auto or false
 			ss.maxwidth = ss.maxwidth or 1
 			ss.colwidth = ss.colwidth or 2
-			ss.padwidth = ss.maxwidth
 			ss.fillchar = ss.fillchar or " "
-			ss.empty = ss.fillchar:rep(ss.maxwidth * ss.colwidth)
 			if setscl ~= false then setscl = true end
 			if not segment.text then segment.text = { builtin.signfunc } end
 		end
@@ -327,6 +335,9 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
 			group = id,
 			callback = function(args)
 				callargs[args.file] = nil
+				for i = 1, signsegmentcount do
+					signsegments[i].wins[args.file] = nil
+				end
 			end
 		})
 	end

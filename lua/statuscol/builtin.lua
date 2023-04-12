@@ -63,17 +63,18 @@ function M.foldfunc(args)
 end
 
 --- Return sign column in configured format.
-function M.signfunc(_, formatarg)
+function M.signfunc(args, formatarg)
 	local ss = formatarg.sign
-	local sss = ss.signs[v.lnum]
-	if not sss then return "%#SignColumn#"..ss.empty.."%*" end
+	local wss = ss.wins[args.win]
+	local sss = wss.signs[v.lnum]
+	if not sss then return "%#SignColumn#"..wss.empty.."%*" end
 	local text = ""
 	local signcount = #sss
 	for i = 1, signcount do
 		local s = sss[i]
 		text = text.."%#"..s.texthl.."#"..s.text.."%*"
 	end
-	local pad = ss.padwidth - signcount
+	local pad = wss.padwidth - signcount
 	if pad > 0 then
 		text = text.."%#SignColumn#"..ss.fillchar:rep(pad * ss.colwidth).."%*"
 	end

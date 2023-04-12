@@ -145,7 +145,7 @@ local function get_statuscol_string()
 
 	-- Update callargs once per window per redraw
 	local tick = C.display_tick
-	if args.tick < tick then
+	if args.tick < tick or not args.buf then
 		local fcs = Ol.fcs:get()
 		local buf = a.nvim_win_get_buf(win)
 		args.buf = buf

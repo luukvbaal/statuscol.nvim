@@ -30,6 +30,7 @@ local cfg = {
 local function update_sign_defined(win)
 	for _, s in ipairs(f.sign_getdefined()) do
 		if s.text then
+			s.wtext = s.text:gsub("%s","")
 			for i = 1, signsegmentcount do
 				local ss = signsegments[i]
 				if ss.lnum and not ss.wins[win].sclnu then goto nextsegment end
@@ -47,7 +48,6 @@ local function update_sign_defined(win)
 		end
 		::nextsign::
 		sign_cache[s.name] = s
-		s.wtext = s.text:gsub("%s","")
 		if s.segment then
 			if not s.texthl then s.texthl = "NoTexthl" end
 			if signsegments[s.segment].colwidth == 1 then s.text = s.wtext end

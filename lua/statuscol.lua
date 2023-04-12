@@ -66,7 +66,7 @@ local function get_click_args(minwid, clicks, button, mods)
     mousepos = f.getmousepos(),
   }
   a.nvim_set_current_win(args.mousepos.winid)
-  a.nvim_win_set_cursor(0, {args.mousepos.line, 0,})
+  a.nvim_win_set_cursor(0, {args.mousepos.line, 0})
   return args
 end
 
@@ -119,7 +119,7 @@ local function get_lnum_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
   local cargs = callargs[args.mousepos.winid]
   if lnumfunc and cargs.sclnu then
-    local placed = f.sign_getplaced(cargs.buf, {group = "*", lnum = args.mousepos.line,})
+    local placed = f.sign_getplaced(cargs.buf, {group = "*", lnum = args.mousepos.line})
     if #placed[1].signs > 0 then
       get_sign_action_inner(args)
       return
@@ -143,8 +143,6 @@ local function update_callargs(args, win, tick)
   if signsegmentcount - ((lnumfunc and not args.sclnu) and 1 or 0) > 0 then
     -- Retrieve signs for the entire buffer and store in "signsegments"
     -- by line number. Only do this if a "signs" segment was configured.
-    local signs = f.sign_getplaced(buf, {group = "*"})[1].signs
-    local signcount = #signs
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
       local wss = ss.wins[win]
@@ -155,7 +153,8 @@ local function update_callargs(args, win, tick)
       wss.width = 0
       wss.signs = {}
     end
-    for i = 1, signcount do
+    local signs = f.sign_getplaced(buf, {group = "*"})[1].signs
+    for i = 1, #signs do
       local s = signs[i]
       if not sign_cache[s.name] then update_sign_defined(win) end
       local sign = sign_cache[s.name]
@@ -188,13 +187,11 @@ local function get_statuscol_string()
   local tick = C.display_tick
 
   if not args then
-    args = {win = win, wp = C.find_window_by_handle(win, error), fold = {},}
+    args = {win = win, wp = C.find_window_by_handle(win, error), fold = {}}
     callargs[win] = args
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
-      ss.wins[win] = {}
-      ss.wins[win].padwidth = ss.maxwidth
-      ss.wins[win].empty = ss.fillchar:rep(ss.maxwidth * ss.colwidth)
+      ss.wins[win] = {padwidth = ss.maxwidth, empty = ss.fillchar:rep(ss.maxwidth * ss.colwidth)}
     end
     update_callargs(args, win, 0)
   elseif args.tick < tick then -- once per window per redraw
@@ -216,8 +213,7 @@ end
 function M.setup(user)
   local ok = pcall(a.nvim_win_get_option, 0, "statuscolumn")
   if not ok then
-    vim.notify([[statuscol.nvim requires a neovim version that includes the 'statuscolumn' option.
-Please update to the latest nightly or build from source.]], vim.log.levels.WARN)
+    vim.notify("statuscol.nvim requires Neovim version >= 0.9", vim.log.levels.WARN)
     return
   end
 
@@ -254,7 +250,7 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
     {text = {"%s"}, click = "v:lua.ScSa"},
     {
       text = {builtin.lnumfunc, " "},
-      condition = {true, builtin.not_empty,},
+      condition = {true, builtin.not_empty},
       click = "v:lua.ScLa",
     },
   }
@@ -267,7 +263,8 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
     local segment = cfg.segments[i]
     if segment.text and contains(segment.text, builtin.lnumfunc) then
       lnumfunc = true
-      segment.sign = segment.sign or {name = {".*"}, lnum = true,}
+      segment.sign = segment.sign or {name = {".*"}}
+      segment.sign.lnum = true
     end
     local ss = segment.sign
     if ss then
@@ -280,7 +277,7 @@ Please update to the latest nightly or build from source.]], vim.log.levels.WARN
       ss.colwidth = ss.colwidth or 2
       ss.fillchar = ss.fillchar or " "
       if setscl ~= false then setscl = true end
-      if not segment.text then segment.text = {builtin.signfunc,} end
+      if not segment.text then segment.text = {builtin.signfunc} end
     end
     if segment.hl then formatstr = formatstr.."%%#"..segment.hl.."#" end
     if segment.click then formatstr = formatstr.."%%@"..segment.click.."@" end

@@ -7,7 +7,7 @@ quote_style = double
 continuation_indent = 4
 max_line_length = 120
 end_of_line = lf
-trailing_table_separator = always
+trailing_table_separator = smart
 call_arg_parentheses = keep
 detect_end_of_line = false
 insert_final_newline = true
@@ -31,7 +31,7 @@ space_after_comma = true
 space_after_comma_in_for_statement = true
 space_around_concat_operator = false
 # [align]
-align_call_args = true
+align_call_args = false
 align_function_params = true
 align_continuous_assign_statement = true
 align_continuous_rect_table_field = true

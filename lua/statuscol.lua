@@ -47,8 +47,8 @@ local function update_sign_defined(win)
 		end
 		::nextsign::
 		sign_cache[s.name] = s
+		s.wtext = s.text:gsub("%s","")
 		if s.segment then
-			s.wtext = s.text:gsub("%s","")
 			if not s.texthl then s.texthl = "NoTexthl" end
 			if signsegments[s.segment].colwidth == 1 then s.text = s.wtext end
 		end
@@ -91,12 +91,19 @@ local function get_sign_action_inner(args)
 	if sign == ' ' then
 		sign = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1)
 	end
-	if not sign_cache[sign] then update_sign_defined() end
 
 	for name, s in pairs(sign_cache) do
 		if s.wtext == sign then
 			call_click_func(name, args)
-			break
+			return
+		end
+	end
+
+	update_sign_defined(args.mousepos.winid)
+	for name, s in pairs(sign_cache) do
+		if s.wtext == sign then
+			call_click_func(name, args)
+			return
 		end
 	end
 end

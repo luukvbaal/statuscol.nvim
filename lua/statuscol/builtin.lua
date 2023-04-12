@@ -9,8 +9,8 @@ local M = {}
 
 --- Return line number in configured format.
 function M.lnumfunc(args, fa)
-	if args.sclnu and fa.sign and fa.sign.signs[v.lnum] then
-		return "%="..M.signfunc(_, fa)
+	if args.sclnu and fa.sign and fa.sign.wins[args.win].signs[v.lnum] then
+		return "%="..M.signfunc(args, fa)
 	end
 	if not args.rnu and not args.nu then return "" end
 	if v.virtnum ~= 0 then return "%=" end

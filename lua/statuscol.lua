@@ -27,12 +27,12 @@ local cfg = {
 }
 
 --- Store defined signs without whitespace.
-local function update_sign_defined()
+local function update_sign_defined(win)
 	for _, s in ipairs(f.sign_getdefined()) do
 		if s.text then
 			for i = 1, signsegmentcount do
 				local ss = signsegments[i]
-				if ss.lnum and not ss.sclnu then goto nextsegment end
+				if ss.lnum and not ss.wins[win].sclnu then goto nextsegment end
 				for j = 1, ss.notnamecount do
 					if s.name:find(ss.notname[j]) then goto nextsegment end
 				end
@@ -159,14 +159,14 @@ local function get_statuscol_string()
 				local wss = ss.wins[win]
 				if ss.lnum and args.sclnu ~= wss.sclnu then
 					wss.sclnu = args.sclnu
-					update_sign_defined()
+					update_sign_defined(win)
 				end
 				wss.width = 0
 				wss.signs = {}
 			end
 			for i = 1, signcount do
 				local s = signs[i]
-				if not sign_cache[s.name] then update_sign_defined() end
+				if not sign_cache[s.name] then update_sign_defined(win) end
 				local sign = sign_cache[s.name]
 				if not sign.segment then goto nextsign end
 				local ss = signsegments[sign.segment]

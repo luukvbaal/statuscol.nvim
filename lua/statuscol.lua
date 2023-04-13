@@ -7,6 +7,8 @@ local S = vim.schedule
 local v = vim.v
 local contains = vim.tbl_contains
 local M = {}
+local idmap = {}
+local lastid = 1
 local sign_cache = {}
 local formatstr, formatargret, formatargs, formatargcount
 local signsegments, signsegmentcount
@@ -22,30 +24,73 @@ local cfg = {
   clickhandlers = {},
 }
 
---- Store defined signs without whitespace.
-local function update_sign_defined(win)
-  for _, s in ipairs(f.sign_getdefined()) do
-    if s.text then
+--- Update namespace id -> name map.
+local function update_nsidmap()
+  local id = lastid
+  local namemap = {}
+  for name, nsid in pairs(a.nvim_get_namespaces()) do
+    namemap[nsid] = name
+  end
+  while id < C.next_namespace_id do
+    idmap[id] = namemap[id] or ""
+    id = id + 1
+  end
+  lastid = id - 1
+end
+
+--- Assign segment to defined legacy signs or placed extmark signs.
+local function update_sign_defined(win, ext)
+  local signs = ext or f.sign_getdefined()
+  for i = 1, #signs do
+    local s = ext and signs[i][4] or signs[i]
+    if ext and s.sign_text or s.text then
+      if ext then
+        s.text = s.sign_text
+        if not idmap[s.ns_id] then update_nsidmap() end
+        s.ns = idmap[s.ns_id]
+      end
       s.wtext = s.text:gsub("%s", "")
-      for i = 1, signsegmentcount do
-        local ss = signsegments[i]
+      s.texthl = ext and s.sign_hl_group or s.texthl or "NoTexthl"
+      if sign_cache[ext and s.text or s.name] then goto nextsign end
+      sign_cache[ext and s.text or s.name] = s
+      for j = 1, signsegmentcount do
+        local ss = signsegments[j]
         if ss.lnum and not ss.wins[win].sclnu then goto nextsegment end
-        for j = 1, ss.notnamecount do
-          if s.name:find(ss.notname[j]) then goto nextsegment end
-        end
-        for j = 1, ss.namecount do
-          if s.name:find(ss.name[j]) then
-            s.segment = i
-            goto nextsign
+        if ext then -- extmarks: match by sign text, highlight group or namespace
+          for k = 1, ss.nottextcount do
+            if s.wtext:find(ss.nottext[k]) then goto nextsegment end
+          end
+          for k = 1, ss.notnamespacecount do
+            if s.ns:find(ss.notnamespace[k]) then goto nextsegment end
+          end
+          for k = 1, ss.textcount do
+            if s.wtext:find(ss.text[k]) then
+              s.segment = j
+              goto nextsign
+            end
+          end
+          for k = 1, ss.namespacecount do
+            if s.ns:find(ss.namespace[k]) then
+              s.segment = j
+              goto nextsign
+            end
+          end
+        else -- legacy sign: match by sign name
+          for k = 1, ss.notnamecount do
+            if s.name:find(ss.notname[k]) then goto nextsegment end
+          end
+          for k = 1, ss.namecount do
+            if s.name:find(ss.name[k]) then
+              s.segment = j
+              goto nextsign
+            end
           end
         end
         ::nextsegment::
       end
     end
     ::nextsign::
-    sign_cache[s.name] = s
     if s.segment then
-      if not s.texthl then s.texthl = "NoTexthl" end
       if signsegments[s.segment].colwidth == 1 then s.text = s.wtext end
     end
   end
@@ -90,7 +135,7 @@ local function get_sign_action_inner(args)
 
   for name, s in pairs(sign_cache) do
     if s.wtext == sign then
-      call_click_func(name, args)
+      call_click_func(s.ns or name, args)
       return
     end
   end
@@ -124,6 +169,29 @@ local function get_lnum_action(minwid, clicks, button, mods)
   call_click_func("Lnum", args)
 end
 
+--- Place (extmark) signs in sign segments.
+local function place_signs(win, signs, ext)
+  for i = 1, #signs do
+    local s = ext and signs[i][4] or signs[i]
+    local lnum = ext and signs[i][2] + 1 or s.lnum
+    local name = ext and s.sign_text or s.name
+    if not sign_cache[name] then
+      update_sign_defined(win, ext and signs)
+    end
+    local sign = sign_cache[name]
+    if not sign.segment then goto nextsign end
+    local ss = signsegments[sign.segment]
+    local wss = ss.wins[win]
+    local sss = wss.signs
+    local width = (sss[lnum] and #sss[lnum] or 0) + 1
+    if width > ss.maxwidth then goto nextsign end
+    if not sss[lnum] then sss[lnum] = {} end
+    if wss.width < width then wss.width = width end
+    sss[lnum][width] = sign
+    ::nextsign::
+  end
+end
+
 -- Update arguments passed to function text segments
 local function update_callargs(args, win, tick)
   local fcs = Ol.fcs:get()
@@ -149,22 +217,8 @@ local function update_callargs(args, win, tick)
       wss.width = 0
       wss.signs = {}
     end
-    local signs = f.sign_getplaced(buf, {group = "*"})[1].signs
-    for i = 1, #signs do
-      local s = signs[i]
-      if not sign_cache[s.name] then update_sign_defined(win) end
-      local sign = sign_cache[s.name]
-      if not sign.segment then goto nextsign end
-      local ss = signsegments[sign.segment]
-      local wss = ss.wins[win]
-      local sss = wss.signs
-      local width = (sss[s.lnum] and #sss[s.lnum] or 0) + 1
-      if width > ss.maxwidth then goto nextsign end
-      if not sss[s.lnum] then sss[s.lnum] = {} end
-      if wss.width < width then wss.width = width end
-      sss[s.lnum][width] = sign_cache[s.name]
-      ::nextsign::
-    end
+    place_signs(win, f.sign_getplaced(buf, {group = "*"})[1].signs, false)
+    place_signs(win, a.nvim_buf_get_extmarks(buf, -1, 0, -1, {details = true, type = "sign"}), true)
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
       local wss = ss.wins[win]
@@ -234,23 +288,24 @@ function M.setup(user)
   signsegmentcount = 0
 
   cfg.clickhandlers = {
-    Lnum                   = builtin.lnum_click,
-    FoldClose              = builtin.foldclose_click,
-    FoldOpen               = builtin.foldopen_click,
-    FoldOther              = builtin.foldother_click,
-    DapBreakpointRejected  = builtin.toggle_breakpoint,
-    DapBreakpoint          = builtin.toggle_breakpoint,
-    DapBreakpointCondition = builtin.toggle_breakpoint,
-    DiagnosticSignError    = builtin.diagnostic_click,
-    DiagnosticSignHint     = builtin.diagnostic_click,
-    DiagnosticSignInfo     = builtin.diagnostic_click,
-    DiagnosticSignWarn     = builtin.diagnostic_click,
-    GitSignsTopdelete      = builtin.gitsigns_click,
-    GitSignsUntracked      = builtin.gitsigns_click,
-    GitSignsAdd            = builtin.gitsigns_click,
-    GitSignsChange         = builtin.gitsigns_click,
-    GitSignsChangedelete   = builtin.gitsigns_click,
-    GitSignsDelete         = builtin.gitsigns_click,
+    Lnum                    = builtin.lnum_click,
+    FoldClose               = builtin.foldclose_click,
+    FoldOpen                = builtin.foldopen_click,
+    FoldOther               = builtin.foldother_click,
+    DapBreakpointRejected   = builtin.toggle_breakpoint,
+    DapBreakpoint           = builtin.toggle_breakpoint,
+    DapBreakpointCondition  = builtin.toggle_breakpoint,
+    DiagnosticSignError     = builtin.diagnostic_click,
+    DiagnosticSignHint      = builtin.diagnostic_click,
+    DiagnosticSignInfo      = builtin.diagnostic_click,
+    DiagnosticSignWarn      = builtin.diagnostic_click,
+    GitSignsTopdelete       = builtin.gitsigns_click,
+    GitSignsUntracked       = builtin.gitsigns_click,
+    GitSignsAdd             = builtin.gitsigns_click,
+    GitSignsChange          = builtin.gitsigns_click,
+    GitSignsChangedelete    = builtin.gitsigns_click,
+    GitSignsDelete          = builtin.gitsigns_click,
+    gitsigns_extmark_signs_ = builtin.gitsigns_click,
   }
   if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
   builtin.init(cfg)
@@ -274,15 +329,20 @@ function M.setup(user)
     local segment = segments[i]
     if segment.text and contains(segment.text, builtin.lnumfunc) then
       lnumfunc = true
-      segment.sign = segment.sign or {name = {".*"}}
+      segment.sign = segment.sign or {name = {".*"}, text = {".*"}}
       segment.sign.lnum = true
     end
     local ss = segment.sign
     if ss then
       signsegmentcount = signsegmentcount + 1
       signsegments[signsegmentcount] = ss
-      ss.namecount = #ss.name
       ss.wins = {}
+      ss.name = ss.name or {}
+      ss.text = ss.text or {}
+      ss.namespace = ss.namespace or {}
+      ss.namecount = #ss.name
+      ss.textcount = #ss.text
+      ss.namespacecount = #ss.namespace
       ss.auto = ss.auto or false
       ss.maxwidth = ss.maxwidth or 1
       ss.colwidth = ss.colwidth or 2
@@ -325,7 +385,11 @@ function M.setup(user)
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
       ss.notname = {}
+      ss.nottext = {}
+      ss.notnamespace = {}
       ss.notnamecount = 0
+      ss.nottextcount = 0
+      ss.notnamespacecount = 0
       for j = 1, signsegmentcount do
         if j ~= i then
           local sso = signsegments[j]
@@ -333,6 +397,18 @@ function M.setup(user)
             if sso.name[k] ~= ".*" then
               ss.notnamecount = ss.notnamecount + 1
               ss.notname[ss.notnamecount] = sso.name[k]
+            end
+          end
+          for k = 1, #sso.text do
+            if sso.text[k] ~= ".*" then
+              ss.nottextcount = ss.nottextcount + 1
+              ss.nottext[ss.nottextcount] = sso.text[k]
+            end
+          end
+          for k = 1, #sso.namespace do
+            if sso.namespace[k] ~= ".*" then
+              ss.notnamespacecount = ss.notnamecount + 1
+              ss.notnamespace[ss.notnamespacecount] = sso.namespace[k]
             end
           end
         end

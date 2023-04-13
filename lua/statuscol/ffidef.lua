@@ -1,5 +1,6 @@
 local ffi = require("ffi")
 ffi.cdef([[
+	int next_namespace_id;
 	uint64_t display_tick;
 	typedef struct {} Error;
 	typedef struct {} win_T;

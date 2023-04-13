@@ -6,15 +6,10 @@ local Ol = vim.opt_local
 local S = vim.schedule
 local contains = vim.tbl_contains
 local M = {}
-local callargs = {}
-local formatstr = ""
 local sign_cache = {}
-local formatargs = {}
-local formatargret = {}
-local formatargcount = 0
-local signsegments = {}
-local signsegmentcount = 0
-local builtin, ffi, error, C, lnumfunc
+local formatstr, formatargret, formatargs, formatargcount
+local signsegments, signsegmentcount
+local builtin, ffi, error, C, lnumfunc, callargs
 local cfg = {
   -- Builtin line number string options
   thousands = false,
@@ -221,6 +216,13 @@ function M.setup(user)
   builtin = require("statuscol.builtin")
   error = ffi.new("Error")
   C = ffi.C
+  callargs = {}
+  formatstr = ""
+  formatargs = {}
+  signsegments = {}
+  formatargret = {}
+  formatargcount = 0
+  signsegmentcount = 0
 
   cfg.clickhandlers = {
     Lnum                   = builtin.lnum_click,
@@ -244,7 +246,7 @@ function M.setup(user)
   if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
   builtin.init(cfg)
 
-  cfg.segments = cfg.segments or {
+  local segments = cfg.segments or {
     -- Default segments (fold -> sign -> line number -> separator)
     {text = {"%C"}, click = "v:lua.ScFa"},
     {text = {"%s"}, click = "v:lua.ScSa"},
@@ -259,8 +261,8 @@ function M.setup(user)
   -- "segments" here and convert it to a format string. Only the variable
   -- elements are evaluated each redraw.
   local setscl
-  for i = 1, #cfg.segments do
-    local segment = cfg.segments[i]
+  for i = 1, #segments do
+    local segment = segments[i]
     if segment.text and contains(segment.text, builtin.lnumfunc) then
       lnumfunc = true
       segment.sign = segment.sign or {name = {".*"}}

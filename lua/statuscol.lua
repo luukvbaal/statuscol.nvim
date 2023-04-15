@@ -4,6 +4,7 @@ local g = vim.g
 local o = vim.o
 local Ol = vim.opt_local
 local S = vim.schedule
+local v = vim.v
 local contains = vim.tbl_contains
 local M = {}
 local sign_cache = {}
@@ -182,14 +183,22 @@ local function get_statuscol_string()
   local tick = C.display_tick
 
   if not args then
-    args = {win = win, wp = C.find_window_by_handle(win, error), fold = {}}
+    args = {win = win, wp = C.find_window_by_handle(win, error), fold = {}, tick = 0}
     callargs[win] = args
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
       ss.wins[win] = {padwidth = ss.maxwidth, empty = ss.fillchar:rep(ss.maxwidth * ss.colwidth)}
     end
-    update_callargs(args, win, 0)
-  elseif args.tick < tick then -- once per window per redraw
+    tick = 1
+  end
+
+  -- faster if segments only index args rather than vim.v
+  args.lnum = v.lnum
+  args.relnum = v.relnum
+  args.virtnum = v.virtnum
+
+  -- once per window per redraw
+  if args.tick < tick then
     update_callargs(args, win, tick)
   end
 

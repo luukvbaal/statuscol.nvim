@@ -2,27 +2,26 @@ local c = vim.cmd
 local d = vim.diagnostic
 local l = vim.lsp
 local npc = vim.F.npcall
-local v = vim.v
 local reverse = string.reverse
 local foldmarker, thou, culright, ffi, C, clickmod
 local M = {}
 
 --- Return line number in configured format.
 function M.lnumfunc(args, fa)
-  if args.sclnu and fa.sign and fa.sign.wins[args.win].signs[v.lnum] then
+  if args.sclnu and fa.sign and fa.sign.wins[args.win].signs[args.lnum] then
     return "%="..M.signfunc(args, fa)
   end
   if not args.rnu and not args.nu then return "" end
-  if v.virtnum ~= 0 then return "%=" end
+  if args.virtnum ~= 0 then return "%=" end
 
-  local lnum = args.rnu and (v.relnum > 0 and v.relnum
-      or (args.nu and v.lnum or 0)) or v.lnum
+  local lnum = args.rnu and (args.relnum > 0 and args.relnum
+      or (args.nu and args.lnum or 0)) or args.lnum
 
   if thou and lnum > 999 then
     lnum = reverse(lnum):gsub("%d%d%d", "%1"..thou):reverse():gsub("^%"..thou, "")
   end
 
-  if v.relnum == 0 and not culright and args.rnu then
+  if args.relnum == 0 and not culright and args.rnu then
     return lnum.."%="
   else
     return "%="..lnum
@@ -34,8 +33,8 @@ function M.foldfunc(args)
   local width = C.compute_foldcolumn(args.wp, 0)
   if width == 0 then return "" end
 
-  local foldinfo = C.fold_info(args.wp, v.lnum)
-  local string = v.relnum > 0 and "%#FoldColumn#" or "%#CursorLineFold#"
+  local foldinfo = C.fold_info(args.wp, args.lnum)
+  local string = args.relnum > 0 and "%#FoldColumn#" or "%#CursorLineFold#"
   local level = foldinfo.level
 
   if level == 0 then
@@ -51,7 +50,7 @@ function M.foldfunc(args)
   for col = 1, range do
     if closed and (col == level or col == width) then
       string = string..args.fold.close
-    elseif foldinfo.start == v.lnum and first_level + col > foldinfo.llevel then
+    elseif foldinfo.start == args.lnum and first_level + col > foldinfo.llevel then
       string = string..args.fold.open
     else
       string = string..args.fold.sep
@@ -66,7 +65,7 @@ end
 function M.signfunc(args, formatarg)
   local ss = formatarg.sign
   local wss = ss.wins[args.win]
-  local sss = wss.signs[v.lnum]
+  local sss = wss.signs[args.lnum]
   if not sss then return "%#SignColumn#"..wss.empty.."%*" end
   local text = ""
   local signcount = #sss

@@ -121,7 +121,30 @@ Each segment can contain the following elements:
 
 * The `text` and `sign` elements are mutually exclusive, except for when `text` contains `builtin.lnumfunc`. In this case a sign segment can be added to control what is displayed in the number segment for `'signcolumn' == "number"`.
 * The `text` and `condition` elements should have the same length.
-* Custom function example for the `text` element:
+* `text` and `condition` functions are passed an `args` table with the following elements:
+
+```lua
+{
+  lnum = 43,     -- v:lnum
+  relnum = 5,    -- v:relnum
+  virtnum = 0,   -- v:virtnum
+  buf = 1,       -- buffer handle
+  win = 1000,    -- window handle
+  nu = true,     -- 'number' option value
+  rnu = true,    -- 'relativenumber' option value
+  fold = {       -- 'fillchars' option values:
+    close = "", -- foldclose
+    open = "",  -- foldopen
+    sep = " "    -- foldsep
+  },
+  -- FFI data:
+  tick = 251ULL, -- display_tick value
+  wp = cdata<struct 112 *>: 0x560b56519a50 -- win_T pointer handle
+}
+```
+
+The values stored in this table are only updated when necessary and used in the builtin segments for performance reasons.
+For custom `text` and `condition` functions it is recommended to use them as well rather than e.g. accessing `vim.v.lnum` or `vim.api.nvim_get_option_value()` directly:
 
 ```lua
 local builtin = require("statuscol.builtin")
@@ -130,8 +153,8 @@ require("statuscol").setup({
     {
       text = {
         " ",               -- whitespace padding
-        function()         -- custom line number highlight function
-          return ((vim.v.lnum % 2 > 0) and "%#DiffDelete#%=" or "%#DiffAdd#%=").."%l"
+        function(args)     -- custom line number highlight function
+          return ((args.lnum % 2 > 0) and "%#DiffDelete#%=" or "%#DiffAdd#%=").."%l"
         end,
         " ",               -- whitespace padding
       },

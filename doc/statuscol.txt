@@ -55,23 +55,24 @@ DEFAULT OPTIONS ~
       clickmod = "c",         -- modifier used for certain actions in the builtin clickhandlers:
                               -- "a" for Alt, "c" for Ctrl and "m" for Meta.
       clickhandlers = {       -- builtin click handlers
-        Lnum                   = builtin.lnum_click,
-        FoldClose              = builtin.foldclose_click,
-        FoldOpen               = builtin.foldopen_click,
-        FoldOther              = builtin.foldother_click,
-        DapBreakpointRejected  = builtin.toggle_breakpoint,
-        DapBreakpoint          = builtin.toggle_breakpoint,
-        DapBreakpointCondition = builtin.toggle_breakpoint,
-        DiagnosticSignError    = builtin.diagnostic_click,
-        DiagnosticSignHint     = builtin.diagnostic_click,
-        DiagnosticSignInfo     = builtin.diagnostic_click,
-        DiagnosticSignWarn     = builtin.diagnostic_click,
-        GitSignsTopdelete      = builtin.gitsigns_click,
-        GitSignsUntracked      = builtin.gitsigns_click,
-        GitSignsAdd            = builtin.gitsigns_click,
-        GitSignsChange         = builtin.gitsigns_click,
-        GitSignsChangedelete   = builtin.gitsigns_click,
-        GitSignsDelete         = builtin.gitsigns_click,
+        Lnum                    = builtin.lnum_click,
+        FoldClose               = builtin.foldclose_click,
+        FoldOpen                = builtin.foldopen_click,
+        FoldOther               = builtin.foldother_click,
+        DapBreakpointRejected   = builtin.toggle_breakpoint,
+        DapBreakpoint           = builtin.toggle_breakpoint,
+        DapBreakpointCondition  = builtin.toggle_breakpoint,
+        DiagnosticSignError     = builtin.diagnostic_click,
+        DiagnosticSignHint      = builtin.diagnostic_click,
+        DiagnosticSignInfo      = builtin.diagnostic_click,
+        DiagnosticSignWarn      = builtin.diagnostic_click,
+        GitSignsTopdelete       = builtin.gitsigns_click,
+        GitSignsUntracked       = builtin.gitsigns_click,
+        GitSignsAdd             = builtin.gitsigns_click,
+        GitSignsChange          = builtin.gitsigns_click,
+        GitSignsChangedelete    = builtin.gitsigns_click,
+        GitSignsDelete          = builtin.gitsigns_click,
+        gitsigns_extmark_signs_ = builtin.gitsigns_click,
       },
     }
 <
@@ -84,18 +85,23 @@ can contain the following elements:
 
 >lua
     {
-      text = { "%C" },      -- table of strings or functions returning a string
-      click = "v:lua.ScFa", -- %@ click function label, applies to each text element
-      hl = "FoldColumn",    -- %# highlight group label, applies to each text element
-      condition = { true }, -- table of booleans or functions returning a boolean
-      sign = {              -- table of fields that configure a sign segment
-        name = { ".*" },    -- table of lua patterns to match the sign name against (required)
+      text = { "%C" },       -- table of strings or functions returning a string
+      click = "v:lua.ScFa",  -- %@ click function label, applies to each text element
+      hl = "FoldColumn",     -- %# highlight group label, applies to each text element
+      condition = { true },  -- table of booleans or functions returning a boolean
+      sign = {               -- table of fields that configure a sign segment
+        -- at least one of "name", "text", and "namespace" is required
+        -- legacy signs are matched against the defined sign name e.g. "DiagnosticSignError"
+        -- extmark signs can be matched agains either the namespace or the sign text itself
+        name = { ".*" },     -- table of lua patterns to match the sign name against
+        text = { ".*" },     -- table of lua patterns to match the extmark sign text against
+        namespace = { ".*" },-- table of lua patterns to match the extmark sign namespace against
         -- below values list the default when omitted:
-        maxwidth = 1,       -- maximum number of signs that will be displayed in this segment
-        colwidth = 2,       -- number of display cells per sign in this segment
-        auto = false,       -- when true, the segment will not be drawn if no signs matching
-                            -- the pattern are currently placed in the buffer.
-        fillchar = " ",     -- character used to fill a segment with less signs than maxwidth
+        maxwidth = 1,        -- maximum number of signs that will be displayed in this segment
+        colwidth = 2,        -- number of display cells per sign in this segment
+        auto = false,        -- when true, the segment will not be drawn if no signs matching
+                             -- the pattern are currently placed in the buffer.
+        fillchar = " ",      -- character used to fill a segment with less signs than maxwidth
       }
     }
 <
@@ -219,25 +225,25 @@ Note that some of the default actions are for optional dependencies, and that
 right click requires |`'mousemodel' == "extend"`| Below follows a list of
 builtin click actions. **Sign/click action pair suggestions are welcome!**
 
-  Sign              Button     Modifier   Action
-  ----------------- ---------- ---------- -----------------------------------
-  Lnum              Left                  Toggle DAP breakpoint
-  Lnum              Left       clickmod   Toggle DAP conditional breakpoint
-  Lnum              Middle                Yank line
-  Lnum              Right                 Paste line
-  Lnum              Right x2              Delete line
-  FoldClose         Left                  Open fold
-  FoldClose         Left       clickmod   Open fold recursively
-  FoldOpen          Left                  Close fold
-  FoldOpen          Left       clickmod   Close fold recursively
-  FoldClose/Other   Right                 Delete fold
-  FoldClose/Other   Right      clickmod   Delete fold recursively
-  Fold*             Middle                Create fold in range(click twice)
-  Diagnostic*       Left                  Open diagnostic float
-  Diagnostic*       Middle                Select available code action
-  GitSigns*         Left                  Preview hunk
-  GitSigns*         Middle                Reset hunk
-  GitSigns*         Right                 Stage hunk
+  Sign/Namespace                      Button     Modifier   Action
+  ----------------------------------- ---------- ---------- -----------------------------------
+  Lnum                                Left                  Toggle DAP breakpoint
+  Lnum                                Left       clickmod   Toggle DAP conditional breakpoint
+  Lnum                                Middle                Yank line
+  Lnum                                Right                 Paste line
+  Lnum                                Right x2              Delete line
+  FoldClose                           Left                  Open fold
+  FoldClose                           Left       clickmod   Open fold recursively
+  FoldOpen                            Left                  Close fold
+  FoldOpen                            Left       clickmod   Close fold recursively
+  FoldClose/Other                     Right                 Delete fold
+  FoldClose/Other                     Right      clickmod   Delete fold recursively
+  Fold*                               Middle                Create fold in range(click twice)
+  Diagnostic*                         Left                  Open diagnostic float
+  Diagnostic*                         Middle                Select available code action
+  GitSigns*/gitsigns_extmark_signs_   Left                  Preview hunk
+  GitSigns*/gitsigns_extmark_signs_   Middle                Reset hunk
+  GitSigns*/gitsigns_extmark_signs_   Right                 Stage hunk
 Optional dependencies:
 
 

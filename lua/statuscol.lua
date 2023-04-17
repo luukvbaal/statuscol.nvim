@@ -27,32 +27,34 @@ local cfg = {
 --- Update namespace id -> name map.
 local function update_nsidmap()
   local id = lastid
+  local nextid = C.next_namespace_id
   local namemap = {}
   for name, nsid in pairs(a.nvim_get_namespaces()) do
     namemap[nsid] = name
   end
-  while id < C.next_namespace_id do
+  while id < nextid do
     idmap[id] = namemap[id] or ""
     id = id + 1
   end
   lastid = id - 1
 end
 
---- Assign segment to defined legacy signs or placed extmark signs.
-local function update_sign_defined(win, ext)
+--- Update sign cache and assign segment to defined legacy signs or placed extmark signs.
+local function update_sign_defined(win, ext, reassign)
   local signs = ext or f.sign_getdefined()
   for i = 1, #signs do
     local s = ext and signs[i][4] or signs[i]
     if ext and s.sign_text or s.text then
+      local name = ext and s.sign_text or s.name
       if ext then
         s.text = s.sign_text
         if not idmap[s.ns_id] then update_nsidmap() end
         s.ns = idmap[s.ns_id]
       end
       s.wtext = s.text:gsub("%s", "")
-      s.texthl = ext and s.sign_hl_group or s.texthl or "NoTexthl"
-      if sign_cache[ext and s.text or s.name] then goto nextsign end
-      sign_cache[ext and s.text or s.name] = s
+      s.texthl = s.sign_hl_group or s.texthl or "NoTexthl"
+      if not reassign and sign_cache[name] then goto nextsign end
+      sign_cache[name] = s
       for j = 1, signsegmentcount do
         local ss = signsegments[j]
         if ss.lnum and not ss.wins[win].sclnu then goto nextsegment end
@@ -175,9 +177,7 @@ local function place_signs(win, signs, ext)
     local s = ext and signs[i][4] or signs[i]
     local lnum = ext and signs[i][2] + 1 or s.lnum
     local name = ext and s.sign_text or s.name
-    if not sign_cache[name] then
-      update_sign_defined(win, ext and signs)
-    end
+    if not sign_cache[name] then update_sign_defined(win, ext and signs) end
     local sign = sign_cache[name]
     if not sign.segment then goto nextsign end
     local ss = signsegments[sign.segment]
@@ -207,18 +207,20 @@ local function update_callargs(args, win, tick)
   if signsegmentcount - ((lnumfunc and not args.sclnu) and 1 or 0) > 0 then
     -- Retrieve signs for the entire buffer and store in "signsegments"
     -- by line number. Only do this if a "signs" segment was configured.
+    local extsigns = a.nvim_buf_get_extmarks(buf, -1, 0, -1, {details = true, type = "sign"})
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
       local wss = ss.wins[win]
       if ss.lnum and args.sclnu ~= wss.sclnu then
         wss.sclnu = args.sclnu
-        update_sign_defined(win)
+        update_sign_defined(win, nil, true)
+        update_sign_defined(win, extsigns, true)
       end
       wss.width = 0
       wss.signs = {}
     end
+    place_signs(win, extsigns, true)
     place_signs(win, f.sign_getplaced(buf, {group = "*"})[1].signs, false)
-    place_signs(win, a.nvim_buf_get_extmarks(buf, -1, 0, -1, {details = true, type = "sign"}), true)
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
       local wss = ss.wins[win]

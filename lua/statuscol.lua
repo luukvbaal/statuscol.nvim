@@ -44,8 +44,8 @@ local function update_sign_defined(win, ext, reassign)
   local signs = ext or f.sign_getdefined()
   for i = 1, #signs do
     local s = ext and signs[i][4] or signs[i]
+    local name = ext and s.sign_text or s.name
     if ext and s.sign_text or s.text then
-      local name = ext and s.sign_text or s.name
       if ext then
         s.text = s.sign_text
         if not idmap[s.ns_id] then update_nsidmap() end
@@ -53,8 +53,10 @@ local function update_sign_defined(win, ext, reassign)
       end
       s.wtext = s.text:gsub("%s", "")
       s.texthl = ext and s.sign_hl_group or s.texthl or "NoTexthl"
-      if not reassign and sign_cache[name] then goto nextsign end
-      sign_cache[name] = s
+      if not reassign and sign_cache[name] then
+        s.segment = sign_cache[name].segment
+        goto nextsign
+      end
       for j = 1, signsegmentcount do
         local ss = signsegments[j]
         if ss.lnum and not ss.wins[win].sclnu then goto nextsegment end
@@ -95,6 +97,7 @@ local function update_sign_defined(win, ext, reassign)
     if s.segment then
       if signsegments[s.segment].colwidth == 1 then s.text = s.wtext end
     end
+    if name then sign_cache[name] = s end
   end
 end
 
@@ -180,15 +183,15 @@ end
 local function place_signs(win, signs, ext)
   for i = 1, #signs do
     local s = ext and signs[i][4] or signs[i]
-    if not (ext and s.sign_text or s.text) then goto nextsign end
     local name = ext and s.sign_text or s.name
+    if ext and not name then goto nextsign end
     if not sign_cache[name] then update_sign_defined(win, ext and signs) end
-    local lnum = ext and signs[i][2] + 1 or s.lnum
     local sign = sign_cache[name]
     if not sign.segment then goto nextsign end
     local ss = signsegments[sign.segment]
     local wss = ss.wins[win]
     local sss = wss.signs
+    local lnum = ext and signs[i][2] + 1 or s.lnum
     local width = (sss[lnum] and #sss[lnum] or 0) + 1
     if width > ss.maxwidth then goto nextsign end
     if not sss[lnum] then sss[lnum] = {} end

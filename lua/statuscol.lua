@@ -108,6 +108,8 @@ local function get_click_args(minwid, clicks, button, mods)
     mods = mods,
     mousepos = f.getmousepos(),
   }
+  -- Avoid handling cmdline click, may be removed in 0.9.1: https://github.com/neovim/neovim/pull/23163
+  if args.mousepos.winid == 0 then return end
   a.nvim_set_current_win(args.mousepos.winid)
   a.nvim_win_set_cursor(0, {args.mousepos.line, 0})
   return args
@@ -121,6 +123,7 @@ end
 --- Execute fold column click callback.
 local function get_fold_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
+  if not args then return end
   local char = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
   local fold = callargs[args.mousepos.winid].fold
   local type = char == fold.open and "FoldOpen"
@@ -154,12 +157,14 @@ end
 --- Execute sign column click callback.
 local function get_sign_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
+  if not args then return end
   get_sign_action_inner(args)
 end
 
 --- Execute line number click callback.
 local function get_lnum_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
+  if not args then return end
   local cargs = callargs[args.mousepos.winid]
   if lnumfunc and cargs.sclnu then
     local placed = f.sign_getplaced(cargs.buf, {group = "*", lnum = args.mousepos.line})

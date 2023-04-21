@@ -28,7 +28,7 @@ For example with lazy.nvim:
       --   },
       --   { text = { builtin.lnumfunc }, click = "v:lua.ScLa", },
       --   {
-      --     sign = { name = { ".*" }, maxwidth = 2, colwidth = 1, auto = true },
+      --     sign = { name = { ".*" }, maxwidth = 2, colwidth = 1, auto = true, wrap = true },
       --     click = "v:lua.ScSa"
       --   },
       -- }
@@ -121,6 +121,8 @@ Each segment can contain the following elements:
     auto = false,        -- when true, the segment will not be drawn if no signs matching
                          -- the pattern are currently placed in the buffer.
     fillchar = " ",      -- character used to fill a segment with less signs than maxwidth
+    wrap = false,        -- when true, signs in this segment will also be drawn on the
+                         -- virtual or wrapped part of a line (when v:virtnum != 0).
   }
 }
 ```

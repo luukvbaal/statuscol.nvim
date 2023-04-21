@@ -65,6 +65,7 @@ end
 function M.signfunc(args, formatarg)
   local ss = formatarg.sign
   local wss = ss.wins[args.win]
+  if args.virtnum ~= 0 and not ss.wrap then return wss.empty.."%*" end
   local sss = wss.signs[args.lnum]
   if not sss then return "%#SignColumn#"..wss.empty.."%*" end
   local text = ""

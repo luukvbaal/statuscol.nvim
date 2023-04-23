@@ -34,7 +34,7 @@ function M.foldfunc(args)
   if width == 0 then return "" end
 
   local foldinfo = C.fold_info(args.wp, args.lnum)
-  local string = args.relnum > 0 and "%#FoldColumn#" or "%#CursorLineFold#"
+  local string = args.cul and args.relnum == 0 and "%#CursorLineFold#" or "%#FoldColumn#"
   local level = foldinfo.level
 
   if level == 0 then
@@ -67,7 +67,8 @@ function M.signfunc(args, formatarg)
   local wss = ss.wins[args.win]
   if args.virtnum ~= 0 and not ss.wrap then return wss.empty.."%*" end
   local sss = wss.signs[args.lnum]
-  if not sss then return "%#SignColumn#"..wss.empty.."%*" end
+  local nonhl = args.cul and args.relnum == 0 and "%#CursorLineSign#" or "%#SignColumn#"
+  if not sss then return nonhl..wss.empty.."%*" end
   local text = ""
   local signcount = #sss
   for i = 1, signcount do
@@ -76,7 +77,7 @@ function M.signfunc(args, formatarg)
   end
   local pad = wss.padwidth - signcount
   if pad > 0 then
-    text = text.."%#SignColumn#"..ss.fillchar:rep(pad * ss.colwidth).."%*"
+    text = text..nonhl..ss.fillchar:rep(pad * ss.colwidth).."%*"
   end
   return text
 end

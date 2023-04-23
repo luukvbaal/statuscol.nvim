@@ -60,7 +60,7 @@ local function update_sign_defined(win, ext, reassign)
       for j = 1, signsegmentcount do
         local ss = signsegments[j]
         if ss.lnum and not ss.wins[win].sclnu then goto nextsegment end
-        if ext then -- extmarks: match by sign text, highlight group or namespace
+        if ext then -- extmarks: match by sign text or namespace
           for k = 1, ss.nottextcount do
             if s.wtext:find(ss.nottext[k]) then goto nextsegment end
           end
@@ -204,11 +204,13 @@ end
 -- Update arguments passed to function text segments
 local function update_callargs(args, win, tick)
   local fcs = Ol.fcs:get()
+  local culopt = a.nvim_win_get_option(win, "culopt")
   local buf = a.nvim_win_get_buf(win)
   args.buf = buf
   args.tick = tick
   args.nu = a.nvim_win_get_option(win, "nu")
   args.rnu = a.nvim_win_get_option(win, "rnu")
+  args.cul = a.nvim_win_get_option(win, "cul") and (culopt:find("nu") or culopt:find("bo"))
   args.sclnu = lnumfunc and a.nvim_win_get_option(win, "scl"):find("nu")
   args.fold.sep = fcs.foldsep or "│"
   args.fold.open = fcs.foldopen or "-"

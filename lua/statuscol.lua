@@ -360,6 +360,7 @@ function M.setup(user)
       ss.maxwidth = ss.maxwidth or 1
       ss.colwidth = ss.colwidth or 2
       ss.fillchar = ss.fillchar or " "
+      if ss.fillcharhl then ss.fillcharhl = "%#"..ss.fillcharhl.."#" end
       if setscl ~= false then setscl = true end
       if not segment.text then segment.text = {builtin.signfunc} end
     end

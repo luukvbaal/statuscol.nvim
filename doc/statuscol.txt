@@ -101,9 +101,10 @@ can contain the following elements:
         colwidth = 2,        -- number of display cells per sign in this segment
         auto = false,        -- when true, the segment will not be drawn if no signs matching
                              -- the pattern are currently placed in the buffer.
-        fillchar = " ",      -- character used to fill a segment with less signs than maxwidth
         wrap = false,        -- when true, signs in this segment will also be drawn on the
                              -- virtual or wrapped part of a line (when v:virtnum != 0).
+        fillchar = " ",      -- character used to fill a segment with less signs than maxwidth
+        fillcharhl = nil,    -- highlight group used for fillchar (SignColumn/CursorLineSign if omitted)
       }
     }
 <

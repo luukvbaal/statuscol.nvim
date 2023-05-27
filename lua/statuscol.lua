@@ -118,8 +118,8 @@ local function get_click_args(minwid, clicks, button, mods)
   return args
 end
 
-local function call_click_func(name, args)
-  local handler = cfg.clickhandlers[name]
+local function call_click_func(name, hl, args)
+  local handler = cfg.clickhandlers[name] or cfg.clickhandlers[hl]
   if handler then S(function() handler(args) end) end
 end
 
@@ -131,7 +131,7 @@ local function get_fold_action(minwid, clicks, button, mods)
   local fold = callargs[args.mousepos.winid].fold
   local type = char == fold.open and "FoldOpen"
       or char == fold.close and "FoldClose" or "FoldOther"
-  call_click_func(type, args)
+  call_click_func(type, type, args)
 end
 
 local function get_sign_action_inner(args)
@@ -143,7 +143,7 @@ local function get_sign_action_inner(args)
 
   for name, s in pairs(sign_cache) do
     if s.wtext == sign then
-      call_click_func(s.ns or name, args)
+      call_click_func(s.ns or name, s.texthl, args)
       return
     end
   end
@@ -151,7 +151,7 @@ local function get_sign_action_inner(args)
   update_sign_defined(args.mousepos.winid)
   for name, s in pairs(sign_cache) do
     if s.wtext == sign then
-      call_click_func(name, args)
+      call_click_func(s.ns or name, s.texthl, args)
       return
     end
   end
@@ -176,7 +176,7 @@ local function get_lnum_action(minwid, clicks, button, mods)
       return
     end
   end
-  call_click_func("Lnum", args)
+  call_click_func("Lnum", "Lnum", args)
 end
 
 --- Place (extmark) signs in sign segments.

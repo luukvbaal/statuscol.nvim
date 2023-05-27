@@ -109,7 +109,6 @@ can contain the following elements:
     }
 <
 
-
 - The `text` and `sign` elements are mutually exclusive, except for when `text` contains `builtin.lnumfunc`. In this case a sign segment can be added to control what is displayed in the number segment for `'signcolumn' == "number"`.
 - The `text` and `condition` elements should have the same length.
 - `text` and `condition` functions are passed an `args` table with the following elements:
@@ -248,7 +247,6 @@ builtin click actions. **Sign/click action pair suggestions are welcome!**
   GitSigns*/gitsigns_extmark_signs_   Middle                Reset hunk
   GitSigns*/gitsigns_extmark_signs_   Right                 Stage hunk
 Optional dependencies:
-
 
 - nvim-dap <https://github.com/mfussenegger/nvim-dap>
 - gitsigns.nvim <https://github.com/lewis6991/gitsigns.nvim>

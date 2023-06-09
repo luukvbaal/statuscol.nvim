@@ -204,14 +204,14 @@ end
 -- Update arguments passed to function text segments
 local function update_callargs(args, win, tick)
   local fcs = Ol.fcs:get()
-  local culopt = a.nvim_win_get_option(win, "culopt")
+  local culopt = a.nvim_get_option_value("culopt", {win = win})
   local buf = a.nvim_win_get_buf(win)
   args.buf = buf
   args.tick = tick
-  args.nu = a.nvim_win_get_option(win, "nu")
-  args.rnu = a.nvim_win_get_option(win, "rnu")
-  args.cul = a.nvim_win_get_option(win, "cul") and (culopt:find("nu") or culopt:find("bo"))
-  args.sclnu = lnumfunc and a.nvim_win_get_option(win, "scl"):find("nu")
+  args.nu = a.nvim_get_option_value("nu", {win = win})
+  args.rnu = a.nvim_get_option_value("rnu", {win = win})
+  args.cul = a.nvim_get_option_value("cul", {win = win}) and (culopt:find("nu") or culopt:find("bo"))
+  args.sclnu = lnumfunc and a.nvim_get_option_value("scl", {win = win}):find("nu")
   args.fold.sep = fcs.foldsep or "│"
   args.fold.open = fcs.foldopen or "-"
   args.fold.close = fcs.foldclose or "+"
@@ -282,7 +282,7 @@ local function get_statuscol_string()
 end
 
 function M.setup(user)
-  local ok = pcall(a.nvim_win_get_option, 0, "statuscolumn")
+  local ok = pcall(a.nvim_get_option_value, "statuscolumn", {})
   if not ok then
     vim.notify("statuscol.nvim requires Neovim version >= 0.9", vim.log.levels.WARN)
     return
@@ -452,11 +452,12 @@ function M.setup(user)
   end
 
   if cfg.ft_ignore then
-    a.nvim_create_autocmd({"FileType", "BufEnter"}, {
+    a.nvim_create_autocmd("FileType", {group = id, pattern = cfg.ft_ignore, command = "set stc="})
+    a.nvim_create_autocmd("BufWinEnter", {
       group = id,
       callback = function()
-        if contains(cfg.ft_ignore, a.nvim_buf_get_option(0, "ft")) then
-          Ol.statuscolumn = ""
+        if contains(cfg.ft_ignore, a.nvim_get_option_value("ft", {scope = "local"})) then
+          a.nvim_set_option_value("stc", "", {scope = "local"})
         end
       end,
     })
@@ -464,11 +465,19 @@ function M.setup(user)
 
   if cfg.bt_ignore then
     a.nvim_create_autocmd("OptionSet", {
+      group = id,
       pattern = "buftype",
+      callback = function()
+        if contains(cfg.bt_ignore, vim.v.option_new) then
+          a.nvim_set_option_value("stc", "", {scope = "local"})
+        end
+      end,
+    })
+    a.nvim_create_autocmd("BufWinEnter", {
       group = id,
       callback = function()
-        if contains(cfg.bt_ignore, a.nvim_buf_get_option(0, "bt")) then
-          Ol.statuscolumn = ""
+        if contains(cfg.bt_ignore, a.nvim_get_option_value("bt", {scope = "local"})) then
+          a.nvim_set_option_value("stc", "", {scope = "local"})
         end
       end,
     })

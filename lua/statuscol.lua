@@ -271,19 +271,15 @@ local function get_statuscol_string()
 
   for i = 1, formatargcount do
     local fa = formatargs[i]
-    if fa.cond == true or fa.cond(args) then
-      formatargret[i] = type(fa.text) == "string" and fa.text or fa.text(args, fa)
-    else
-      formatargret[i] = ""
-    end
+    formatargret[i] = (fa.cond == true or fa.cond(args))
+      and (fa.textfunc and fa.text(args, fa) or fa.text) or ""
   end
 
   return formatstr:format(unpack(formatargret))
 end
 
 function M.setup(user)
-  local ok = pcall(a.nvim_get_option_value, "statuscolumn", {})
-  if not ok then
+  if f.has("nvim-0.9") == 0 then
     vim.notify("statuscol.nvim requires Neovim version >= 0.9", vim.log.levels.WARN)
     return
   end
@@ -380,6 +376,7 @@ function M.setup(user)
           formatargcount = formatargcount + 1
           formatargs[formatargcount] = {
             text = text,
+            textfunc = type(text) == "function",
             cond = condition,
             sign = ss,
           }

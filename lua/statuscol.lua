@@ -449,7 +449,7 @@ function M.setup(user)
   end
 
   if cfg.ft_ignore then
-    a.nvim_create_autocmd("FileType", {group = id, pattern = cfg.ft_ignore, command = "set stc="})
+    a.nvim_create_autocmd("FileType", {group = id, pattern = cfg.ft_ignore, command = "setlocal stc="})
     a.nvim_create_autocmd("BufWinEnter", {
       group = id,
       callback = function()

@@ -317,6 +317,9 @@ function M.setup(user)
     gitsigns_extmark_signs_ = builtin.gitsigns_click,
   }
   if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
+  if cfg.order then
+    vim.notify('The "order" configuration key is deprecated. Refer to the "segments" key in |statuscol-configuration| instead.', vim.log.levels.WARN)
+  end
   builtin.init(cfg)
 
   local segments = cfg.segments or {

@@ -421,7 +421,7 @@ function M.setup(user)
           end
           for k = 1, #sso.namespace do
             if sso.namespace[k] ~= ".*" then
-              ss.notnamespacecount = ss.notnamecount + 1
+              ss.notnamespacecount = ss.notnamespacecount + 1
               ss.notnamespace[ss.notnamespacecount] = sso.namespace[k]
             end
           end

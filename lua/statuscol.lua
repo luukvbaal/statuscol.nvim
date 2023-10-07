@@ -44,7 +44,7 @@ local function update_sign_defined(win, ext, reassign)
   local signs = ext or f.sign_getdefined()
   for i = 1, #signs do
     local s = ext and signs[i][4] or signs[i]
-    local name = ext and s.sign_text or s.name
+    local name = ext and s.sign_text..s.sign_hl_group or s.name
     if ext and s.sign_text or s.text then
       if ext then
         s.text = s.sign_text
@@ -183,7 +183,7 @@ end
 local function place_signs(win, signs, ext)
   for i = 1, #signs do
     local s = ext and signs[i][4] or signs[i]
-    local name = ext and s.sign_text or s.name
+    local name = ext and s.sign_text..s.sign_hl_group or s.name
     if ext and not name then goto nextsign end
     if not sign_cache[name] then update_sign_defined(win, ext and signs) end
     local sign = sign_cache[name]

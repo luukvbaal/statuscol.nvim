@@ -196,7 +196,7 @@ local function place_signs(win, signs, ext)
     if width > ss.maxwidth then
       if not ext then
         for j = 1, width - 1 do
-          if s.priority > sss[lnum][j].priority then
+          if sss[lnum][j].priority and s.priority > sss[lnum][j].priority then
             table.insert(sss[lnum], j, sign)
             sss[lnum][width] = nil
             goto nextsign

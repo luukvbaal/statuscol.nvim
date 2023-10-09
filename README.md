@@ -7,7 +7,7 @@ Requires Neovim >= 0.9.
 
 ![image](https://user-images.githubusercontent.com/31730729/230627808-de0b1e97-116d-4016-b4ba-cb709dfcd980.png)
 
-_Status column containing a fold column without fold depth digits, a custom sign segment that will only show diagnostic signs, a number column with right aligned relativenumbers and a sign segment that is only 1 cell wide that shows all other signs._
+_Status column containing a fold column without fold depth digits, a custom sign segment that will only show diagnostic signs, a number column with right aligned relative numbers and a sign segment that is only 1 cell wide that shows all other signs._
 
 ## Install
 
@@ -42,7 +42,7 @@ For example with lazy.nvim:
 ## Usage
 
 By default, the `setup()` function will configure the `'statuscolumn'` option for you.
-This will yield a clickable 'statuscolumn' that looks the same as default neovim, still obeying most of neovim's options that modify the way the "gutter" looks.
+This will yield a clickable 'statuscolumn' that looks the same as default neovim, still obeying most of neovim's options that modify the way the status column looks.
 Further customization is possible through various configuration variables in the `setup()` table.
 
 ## Configuration
@@ -60,7 +60,7 @@ local cfg = {
   thousands = false,     -- or line number thousands separator string ("." / ",")
   relculright = false,   -- whether to right-align the cursor line number with 'relativenumber' set
   -- Builtin 'statuscolumn' options
-  ft_ignore = nil,       -- lua table with filetypes for which 'statuscolumn' will be unset
+  ft_ignore = nil,       -- lua table with 'filetype' values for which 'statuscolumn' will be unset
   bt_ignore = nil,       -- lua table with 'buftype' values for which 'statuscolumn' will be unset
   -- Default segments (fold -> sign -> line number + separator), explained below
   segments = {
@@ -99,7 +99,7 @@ local cfg = {
 
 ### Custom segments
 
-The status column can be customized through the `segments` table.
+The statuscolumn can be customized through the `segments` table.
 Each segment can contain the following elements:
 
 ```lua
@@ -111,7 +111,7 @@ Each segment can contain the following elements:
   sign = {               -- table of fields that configure a sign segment
     -- at least one of "name", "text", and "namespace" is required
     -- legacy signs are matched against the defined sign name e.g. "DiagnosticSignError"
-    -- extmark signs can be matched agains either the namespace or the sign text itself
+    -- extmark signs can be matched against either the namespace or the sign text itself
     name = { ".*" },     -- table of lua patterns to match the sign name against
     text = { ".*" },     -- table of lua patterns to match the extmark sign text against
     namespace = { ".*" },-- table of lua patterns to match the extmark sign namespace against
@@ -128,7 +128,7 @@ Each segment can contain the following elements:
 }
 ```
 
-* The `text` and `sign` elements are mutually exclusive, except for when `text` contains `builtin.lnumfunc`. In this case a sign segment can be added to control what is displayed in the number segment for `'signcolumn' == "number"`.
+* The `text` and `sign` elements are mutually exclusive, except when `text` contains `builtin.lnumfunc`. In this case a sign segment can be added to control what is displayed in the number segment for `'signcolumn' == "number"`.
 * The `text` and `condition` elements should have the same length.
 * `text` and `condition` functions are passed an `args` table with the following elements:
 
@@ -141,7 +141,10 @@ Each segment can contain the following elements:
   win = 1000,    -- window handle
   nu = true,     -- 'number' option value
   rnu = true,    -- 'relativenumber' option value
-  fold = {       -- 'fillchars' option values:
+  empty = true,  -- statuscolumn is currently empty
+  fold = {
+    width = 1,   -- current width of the fold column
+    -- 'fillchars' option values:
     close = "", -- foldclose
     open = "",  -- foldopen
     sep = " "    -- foldsep
@@ -152,7 +155,7 @@ Each segment can contain the following elements:
 }
 ```
 
-The values stored in this table are only updated when necessary and used in the builtin segments for performance reasons.
+The values stored in this table are only updated when necessary and are used in the builtin segments for performance reasons.
 For custom `text` and `condition` functions it is recommended to use them as well rather than e.g. accessing `vim.v.lnum` or `vim.api.nvim_get_option_value()` directly:
 
 ```lua

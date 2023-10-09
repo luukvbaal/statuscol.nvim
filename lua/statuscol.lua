@@ -226,6 +226,8 @@ local function update_callargs(args, win, tick)
   args.fold.sep = fcs.foldsep or "│"
   args.fold.open = fcs.foldopen or "-"
   args.fold.close = fcs.foldclose or "+"
+  args.fold.width = C.compute_foldcolumn(args.wp, 0)
+  args.empty = C.win_col_off(args.wp) == 0
   if signsegmentcount - ((lnumfunc and not args.sclnu) and 1 or 0) > 0 then
     -- Retrieve signs for the entire buffer and store in "signsegments"
     -- by line number. Only do this if a "signs" segment was configured.

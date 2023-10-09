@@ -30,7 +30,7 @@ end
 
 --- Return fold column in configured format.
 function M.foldfunc(args)
-  local width = C.compute_foldcolumn(args.wp, 0)
+  local width = args.fold.width
   if width == 0 then return "" end
 
   local foldinfo = C.fold_info(args.wp, args.lnum)
@@ -84,7 +84,7 @@ end
 
 --- Return true if the statuscolumn is not empty.
 function M.not_empty(args)
-  return C.win_col_off(args.wp) > 0
+  return not args.empty
 end
 
 --- Create new fold by middle-cliking the range.

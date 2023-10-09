@@ -193,7 +193,18 @@ local function place_signs(win, signs, ext)
     local sss = wss.signs
     local lnum = ext and signs[i][2] + 1 or s.lnum
     local width = (sss[lnum] and #sss[lnum] or 0) + 1
-    if width > ss.maxwidth then goto nextsign end
+    if width > ss.maxwidth then
+      if not ext then
+        for j = 1, width - 1 do
+          if s.priority > sss[lnum][j].priority then
+            table.insert(sss[lnum], j, sign)
+            sss[lnum][width] = nil
+            goto nextsign
+          end
+        end
+      end
+      goto nextsign
+    end
     if not sss[lnum] then sss[lnum] = {} end
     if wss.width < width then wss.width = width end
     sss[lnum][width] = sign

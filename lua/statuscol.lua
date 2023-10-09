@@ -44,10 +44,11 @@ local function update_sign_defined(win, ext, reassign)
   local signs = ext or f.sign_getdefined()
   for i = 1, #signs do
     local s = ext and signs[i][4] or signs[i]
-    local name = ext and s.sign_text..s.sign_hl_group or s.name
-    if ext and s.sign_text or s.text then
+    local name = s.name
+    if s.sign_text or s.text then
       if ext then
         s.text = s.sign_text
+        name = s.text..s.sign_hl_group
         if not idmap[s.ns_id] then update_nsidmap() end
         s.ns = idmap[s.ns_id]
       end

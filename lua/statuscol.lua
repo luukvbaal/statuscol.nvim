@@ -7,8 +7,6 @@ local S = vim.schedule
 local v = vim.v
 local contains = vim.tbl_contains
 local M = {}
-local idmap = {}
-local lastid = 1
 local sign_cache = {}
 local formatstr, formatargret, formatargs, formatargcount
 local signsegments, signsegmentcount
@@ -23,80 +21,77 @@ local cfg = {
   clickmod = "c",
   clickhandlers = {},
 }
+local lastid = 1
+local nsmap = setmetatable({}, {
+  __index = function(nsmap, key)
+    local id = lastid
+    local nextid = C.next_namespace_id
+    local namemap = {}
+    for name, nsid in pairs(a.nvim_get_namespaces()) do
+      namemap[nsid] = name
+    end
+    while id < nextid do
+      nsmap[id] = namemap[id] or ""
+      id = id + 1
+    end
+    lastid = id - 1
+    return nsmap[key]
+  end,
+})
 
---- Update namespace id -> name map.
-local function update_nsidmap()
-  local id = lastid
-  local nextid = C.next_namespace_id
-  local namemap = {}
-  for name, nsid in pairs(a.nvim_get_namespaces()) do
-    namemap[nsid] = name
+--- Assign a sign to a segment based on name, text or namespace.
+local function sign_assign_segment(s, win)
+  local segment = 1
+  while segment <= signsegmentcount do
+    local ss = signsegments[segment]
+    if ss.lnum and not ss.wins[win].sclnu then goto next end
+    if s.sign_name then -- legacy sign
+      for j = 1, ss.notnamecount do
+        if s.sign_name:find(ss.notname[j]) then goto next end
+      end
+      for j = 1, ss.namecount do
+        if s.sign_name:find(ss.name[j]) then goto found end
+      end
+    elseif s.ns then -- extmark sign
+      for j = 1, ss.nottextcount do
+        if s.wtext:find(ss.nottext[j]) then goto next end
+      end
+      for j = 1, ss.notnamespacecount do
+        if s.ns:find(ss.notnamespace[j]) then goto next end
+      end
+      for j = 1, ss.textcount do
+        if s.wtext:find(ss.text[j]) then goto found end
+      end
+      for j = 1, ss.namespacecount do
+        if s.ns:find(ss.namespace[j]) then goto found end
+      end
+    end
+    ::next::
+    segment = segment + 1
   end
-  while id < nextid do
-    idmap[id] = namemap[id] or ""
-    id = id + 1
-  end
-  lastid = id - 1
+  ::found::
+  if segment <= signsegmentcount then s.segment = segment end
 end
 
 --- Update sign cache and assign segment to defined legacy signs or placed extmark signs.
-local function update_sign_defined(win, ext, reassign)
-  local signs = ext or f.sign_getdefined()
+local function update_sign_defined(win, signs, reassign)
   for i = 1, #signs do
-    local s = ext and signs[i][4] or signs[i]
-    local name = ext and s.sign_text and s.sign_text..s.sign_hl_group or s.name
-    if s.sign_text or s.text then
-      if ext then
-        s.text = s.sign_text
-        if not idmap[s.ns_id] then update_nsidmap() end
-        s.ns = idmap[s.ns_id]
+    local s = signs[i][4]
+    local name = s.sign_name
+    if s.sign_text then
+      if not name then
+        name = s.sign_text and s.sign_text..s.sign_hl_group
+        s.ns = nsmap[s.ns_id]
       end
-      s.wtext = s.text:gsub("%s", "")
-      s.texthl = ext and s.sign_hl_group or s.texthl or "NoTexthl"
-      if not reassign and sign_cache[name] then
-        s.segment = sign_cache[name].segment
-        goto nextsign
-      end
-      for j = 1, signsegmentcount do
-        local ss = signsegments[j]
-        if ss.lnum and not ss.wins[win].sclnu then goto nextsegment end
-        if ext then -- extmarks: match by sign text or namespace
-          for k = 1, ss.nottextcount do
-            if s.wtext:find(ss.nottext[k]) then goto nextsegment end
-          end
-          for k = 1, ss.notnamespacecount do
-            if s.ns:find(ss.notnamespace[k]) then goto nextsegment end
-          end
-          for k = 1, ss.textcount do
-            if s.wtext:find(ss.text[k]) then
-              s.segment = j
-              goto nextsign
-            end
-          end
-          for k = 1, ss.namespacecount do
-            if s.ns:find(ss.namespace[k]) then
-              s.segment = j
-              goto nextsign
-            end
-          end
-        else -- legacy sign: match by sign name
-          for k = 1, ss.notnamecount do
-            if s.name:find(ss.notname[k]) then goto nextsegment end
-          end
-          for k = 1, ss.namecount do
-            if s.name:find(ss.name[k]) then
-              s.segment = j
-              goto nextsign
-            end
-          end
-        end
-        ::nextsegment::
+      s.wtext = s.sign_text:gsub("%s", "")
+      if not s.sign_hl_group then s.sign_hl_group = "NoTexthl" end
+      if not reassign and sign_cache[s.sign_name] then
+        s.segment = sign_cache[s.sign_name].segment
+      else
+        sign_assign_segment(s, win)
       end
     end
-    ::nextsign::
-    if s.segment then
-      if signsegments[s.segment].colwidth == 1 then s.text = s.wtext end
-    end
+    if s.segment and signsegments[s.segment].colwidth == 1 then s.sign_text = s.wtext end
     if name then sign_cache[name] = s end
   end
 end
@@ -111,47 +106,38 @@ local function get_click_args(minwid, clicks, button, mods)
     mods = mods,
     mousepos = f.getmousepos(),
   }
-  -- Avoid handling cmdline click, may be removed in 0.9.1: https://github.com/neovim/neovim/pull/23163
-  if args.mousepos.winid == 0 then return end
   a.nvim_set_current_win(args.mousepos.winid)
   a.nvim_win_set_cursor(0, {args.mousepos.line, 0})
   return args
 end
 
-local function call_click_func(name, hl, args)
-  local handler = cfg.clickhandlers[name] or cfg.clickhandlers[hl]
+local function call_click_func(name, args)
+  local handler = cfg.clickhandlers[name:match("vim.diagnostic") or name]
   if handler then S(function() handler(args) end) end
 end
 
 --- Execute fold column click callback.
 local function get_fold_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
-  if not args then return end
-  local char = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
+  local text = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
   local fold = callargs[args.mousepos.winid].fold
-  local type = char == fold.open and "FoldOpen"
-      or char == fold.close and "FoldClose" or "FoldOther"
-  call_click_func(type, type, args)
+  local type = text == fold.open and "FoldOpen" or text == fold.close and "FoldClose" or "FoldOther"
+  call_click_func(type, args)
 end
 
 local function get_sign_action_inner(args)
-  local sign = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
+  local text = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
   -- When empty space is clicked in the sign column, try one cell to the left
-  if sign == " " then
-    sign = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1)
+  if text == " " then
+    text = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1)
   end
 
-  for name, s in pairs(sign_cache) do
-    if s.wtext == sign then
-      call_click_func(s.ns or name, s.texthl, args)
-      return
-    end
-  end
-
-  update_sign_defined(args.mousepos.winid)
-  for name, s in pairs(sign_cache) do
-    if s.wtext == sign then
-      call_click_func(s.ns or name, s.texthl, args)
+  local row = args.mousepos.line - 1
+  local signs = a.nvim_buf_get_extmarks(0, -1, {row, 0}, {row, -1}, {type = "sign", details = true})
+  for i = 1, #signs do
+    local s = signs[i][4]
+    if s.sign_text:gsub("%s", "") == text then
+      call_click_func(s.sign_name or nsmap[s.ns_id], args)
       return
     end
   end
@@ -160,51 +146,37 @@ end
 --- Execute sign column click callback.
 local function get_sign_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
-  if not args then return end
   get_sign_action_inner(args)
 end
 
 --- Execute line number click callback.
 local function get_lnum_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
-  if not args then return end
   local cargs = callargs[args.mousepos.winid]
   if lnumfunc and cargs.sclnu then
-    local placed = f.sign_getplaced(cargs.buf, {group = "*", lnum = args.mousepos.line})
-    if #placed[1].signs > 0 then
+    local row = args.mousepos.line - 1
+    if #a.nvim_buf_get_extmarks(0, -1, {row, 0}, {row, -1}, {type = "sign"}) > 0 then
       get_sign_action_inner(args)
       return
     end
   end
-  call_click_func("Lnum", "Lnum", args)
+  call_click_func("Lnum", args)
 end
 
 --- Place (extmark) signs in sign segments.
-local function place_signs(win, signs, ext)
+local function place_signs(win, signs)
   for i = 1, #signs do
-    local s = ext and signs[i][4] or signs[i]
-    local name = ext and s.sign_text and s.sign_text..s.sign_hl_group or s.name
-    if ext and not name then goto nextsign end
-    if not sign_cache[name] then update_sign_defined(win, ext and signs) end
+    local s = signs[i][4]
+    local name = s.sign_name or s.sign_text and s.sign_text..s.sign_hl_group
+    if not sign_cache[name] then update_sign_defined(win, {signs[i]}) end
     local sign = sign_cache[name]
     if not sign.segment then goto nextsign end
     local ss = signsegments[sign.segment]
     local wss = ss.wins[win]
     local sss = wss.signs
-    local lnum = ext and signs[i][2] + 1 or s.lnum
+    local lnum = signs[i][2] + 1
     local width = (sss[lnum] and #sss[lnum] or 0) + 1
-    if width > ss.maxwidth then
-      if not ext then
-        for j = 1, width - 1 do
-          if sss[lnum][j].priority and s.priority > sss[lnum][j].priority then
-            table.insert(sss[lnum], j, sign)
-            sss[lnum][width] = nil
-            goto nextsign
-          end
-        end
-      end
-      goto nextsign
-    end
+    if width > ss.maxwidth then goto nextsign end
     if not sss[lnum] then sss[lnum] = {} end
     if wss.width < width then wss.width = width end
     sss[lnum][width] = sign
@@ -231,20 +203,18 @@ local function update_callargs(args, win, tick)
   if signsegmentcount - ((lnumfunc and not args.sclnu) and 1 or 0) > 0 then
     -- Retrieve signs for the entire buffer and store in "signsegments"
     -- by line number. Only do this if a "signs" segment was configured.
-    local extsigns = a.nvim_buf_get_extmarks(buf, -1, 0, -1, {details = true, type = "sign"})
+    local signs = a.nvim_buf_get_extmarks(buf, -1, 0, -1, {details = true, type = "sign"})
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
       local wss = ss.wins[win]
       if ss.lnum and args.sclnu ~= wss.sclnu then
         wss.sclnu = args.sclnu
-        update_sign_defined(win, nil, true)
-        update_sign_defined(win, extsigns, true)
+        update_sign_defined(win, signs, true)
       end
       wss.width = 0
       wss.signs = {}
     end
-    place_signs(win, extsigns, true)
-    place_signs(win, f.sign_getplaced(buf, {group = "*"})[1].signs, false)
+    place_signs(win, signs)
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
       local wss = ss.wins[win]
@@ -321,18 +291,15 @@ function M.setup(user)
     DiagnosticSignHint      = builtin.diagnostic_click,
     DiagnosticSignInfo      = builtin.diagnostic_click,
     DiagnosticSignWarn      = builtin.diagnostic_click,
+    gitsigns_extmark_signs_ = builtin.gitsigns_click,
     GitSignsTopdelete       = builtin.gitsigns_click,
     GitSignsUntracked       = builtin.gitsigns_click,
     GitSignsAdd             = builtin.gitsigns_click,
     GitSignsChange          = builtin.gitsigns_click,
     GitSignsChangedelete    = builtin.gitsigns_click,
     GitSignsDelete          = builtin.gitsigns_click,
-    gitsigns_extmark_signs_ = builtin.gitsigns_click,
   }
   if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
-  if cfg.order then
-    vim.notify('The "order" configuration key is deprecated. Refer to the "segments" key in |statuscol-configuration| instead.', vim.log.levels.WARN)
-  end
   builtin.init(cfg)
 
   local segments = cfg.segments or {

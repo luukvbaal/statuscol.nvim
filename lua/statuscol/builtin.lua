@@ -73,7 +73,7 @@ function M.signfunc(args, formatarg)
   local signcount = #sss
   for i = 1, signcount do
     local s = sss[i]
-    text = text.."%#"..s.texthl.."#"..s.text.."%*"
+    text = text.."%#"..s.sign_hl_group.."#"..s.sign_text.."%*"
   end
   local pad = wss.padwidth - signcount
   if pad > 0 then

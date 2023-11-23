@@ -37,9 +37,7 @@ function M.foldfunc(args)
   local string = args.cul and args.relnum == 0 and "%#CursorLineFold#" or "%#FoldColumn#"
   local level = foldinfo.level
 
-  if level == 0 then
-    return string..(" "):rep(width).."%*"
-  end
+  if level == 0 then return string..(" "):rep(width).."%*" end
 
   local closed = foldinfo.lines > 0
   local first_level = level - width - (closed and 1 or 0) + 1
@@ -87,7 +85,7 @@ function M.not_empty(args)
   return not args.empty
 end
 
---- Create new fold by middle-cliking the range.
+--- Create new fold by middle-clicking the range.
 local function create_fold(args)
   if foldmarker then
     c("norm! zf"..foldmarker.."G")

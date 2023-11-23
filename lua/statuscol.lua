@@ -52,7 +52,7 @@ local function sign_assign_segment(s, win)
       for j = 1, ss.namecount do
         if s.sign_name:find(ss.name[j]) then goto found end
       end
-    elseif s.ns then -- extmark sign
+    else -- extmark sign
       for j = 1, ss.nottextcount do
         if s.wtext:find(ss.nottext[j]) then goto next end
       end
@@ -73,23 +73,23 @@ local function sign_assign_segment(s, win)
   if segment <= signsegmentcount then s.segment = segment end
 end
 
---- Update sign cache and assign segment to defined legacy signs or placed extmark signs.
-local function update_sign_defined(win, signs, reassign)
+--- Update sign cache and assign segment to signs.
+local function sign_cache_add(win, signs, reassign)
   for i = 1, #signs do
     local s = signs[i][4]
     local name = s.sign_name
     if s.sign_text then
+      if not s.sign_hl_group then s.sign_hl_group = "NoTexthl" end
       if not name then
         name = s.sign_text and s.sign_text..s.sign_hl_group
         s.ns = nsmap[s.ns_id]
       end
-      s.wtext = s.sign_text:gsub("%s", "")
-      if not s.sign_hl_group then s.sign_hl_group = "NoTexthl" end
       if not reassign and sign_cache[s.sign_name] then
         s.segment = sign_cache[s.sign_name].segment
       else
         sign_assign_segment(s, win)
       end
+      s.wtext = s.sign_text:gsub("%s", "")
     end
     if s.segment and signsegments[s.segment].colwidth == 1 then s.sign_text = s.wtext end
     if name then sign_cache[name] = s end
@@ -112,7 +112,7 @@ local function get_click_args(minwid, clicks, button, mods)
 end
 
 local function call_click_func(name, args)
-  local handler = cfg.clickhandlers[name:match("vim.diagnostic") or name]
+  local handler = cfg.clickhandlers[name]
   if handler then S(function() handler(args) end) end
 end
 
@@ -163,12 +163,12 @@ local function get_lnum_action(minwid, clicks, button, mods)
   call_click_func("Lnum", args)
 end
 
---- Place (extmark) signs in sign segments.
+--- Place signs in sign segments.
 local function place_signs(win, signs)
   for i = 1, #signs do
     local s = signs[i][4]
     local name = s.sign_name or s.sign_text and s.sign_text..s.sign_hl_group
-    if not sign_cache[name] then update_sign_defined(win, {signs[i]}) end
+    if not sign_cache[name] then sign_cache_add(win, {signs[i]}) end
     local sign = sign_cache[name]
     if not sign.segment then goto nextsign end
     local ss = signsegments[sign.segment]
@@ -209,7 +209,7 @@ local function update_callargs(args, win, tick)
       local wss = ss.wins[win]
       if ss.lnum and args.sclnu ~= wss.sclnu then
         wss.sclnu = args.sclnu
-        update_sign_defined(win, signs, true)
+        sign_cache_add(win, signs, true)
       end
       wss.width = 0
       wss.signs = {}
@@ -373,7 +373,7 @@ function M.setup(user)
   end
   if setscl and o.scl ~= "number" then o.scl = "no" end
   -- For each sign segment, store the name patterns from other sign segments.
-  -- This list is used in update_sign_defined() to make sure that signs that
+  -- This list is used in sign_assign_segment() to make sure that signs that
   -- have a dedicated segment do not get placed in a wildcard(".*") segment.
   if signsegmentcount > 0 then
     for i = 1, signsegmentcount do

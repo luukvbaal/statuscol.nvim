@@ -112,7 +112,7 @@ Each segment can contain the following elements:
     -- at least one of "name", "text", and "namespace" is required
     -- legacy signs are matched against the defined sign name e.g. "DiagnosticSignError"
     -- extmark signs can be matched against either the namespace or the sign text itself
-    name = { ".*" },     -- table of lua patterns to match the sign name against
+    name = { ".*" },     -- table of lua patterns to match the legacy sign name against
     text = { ".*" },     -- table of lua patterns to match the extmark sign text against
     namespace = { ".*" },-- table of lua patterns to match the extmark sign namespace against
     -- below values list the default when omitted:

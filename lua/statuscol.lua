@@ -70,11 +70,11 @@ local function sign_assign_segment(s, win)
     segment = segment + 1
   end
   ::found::
-  if segment <= signsegmentcount then s.segment = segment end
+  return segment <= signsegmentcount and segment
 end
 
 --- Update sign cache and assign segment to signs.
-local function sign_cache_add(win, signs, reassign)
+local function sign_cache_add(win, signs, cache)
   for i = 1, #signs do
     local s = signs[i][4]
     local name = s.sign_name
@@ -84,12 +84,8 @@ local function sign_cache_add(win, signs, reassign)
         name = s.sign_text and s.sign_text..s.sign_hl_group
         s.ns = nsmap[s.ns_id]
       end
-      if not reassign and sign_cache[s.sign_name] then
-        s.segment = sign_cache[s.sign_name].segment
-      else
-        sign_assign_segment(s, win)
-      end
       s.wtext = s.sign_text:gsub("%s", "")
+      s.segment = cache and sign_cache[s.sign_name] or sign_assign_segment(s, win)
     end
     if s.segment and signsegments[s.segment].colwidth == 1 then s.sign_text = s.wtext end
     if name then sign_cache[name] = s end
@@ -210,7 +206,7 @@ local function update_callargs(args, win, tick)
       local wss = ss.wins[win]
       if ss.lnum and args.sclnu ~= wss.sclnu then
         wss.sclnu = args.sclnu
-        sign_cache_add(win, signs, true)
+        sign_cache_add(win, signs, false)
       end
       wss.width = 0
       wss.signs = {}

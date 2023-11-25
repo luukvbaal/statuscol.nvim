@@ -168,6 +168,7 @@ local function place_signs(win, signs)
   for i = 1, #signs do
     local s = signs[i][4]
     local name = s.sign_name or s.sign_text and s.sign_text..s.sign_hl_group
+    if not name then goto nextsign end
     if not sign_cache[name] then sign_cache_add(win, {signs[i]}) end
     local sign = sign_cache[name]
     if not sign.segment then goto nextsign end

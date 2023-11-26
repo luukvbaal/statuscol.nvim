@@ -7,9 +7,6 @@ local S = vim.schedule
 local v = vim.v
 local contains = vim.tbl_contains
 local M = {}
-local sign_cache = {}
-local formatstr, formatargret, formatargs, formatargcount
-local signsegments, signsegmentcount
 local builtin, ffi, error, C, lnumfunc, callargs
 local cfg = {
   -- Builtin line number string options
@@ -39,6 +36,7 @@ local nsmap = setmetatable({}, {
   end,
 })
 
+local signsegments, signsegmentcount
 --- Assign a sign to a segment based on name, text or namespace.
 local function sign_assign_segment(s, win)
   local segment = 1
@@ -73,23 +71,22 @@ local function sign_assign_segment(s, win)
   return segment <= signsegmentcount and segment
 end
 
+local sign_cache = {}
 --- Update sign cache and assign segment to signs.
-local function sign_cache_add(win, signs, cache)
-  for i = 1, #signs do
-    local s = signs[i][4]
-    local name = s.sign_name
-    if s.sign_text then
-      if not s.sign_hl_group then s.sign_hl_group = "NoTexthl" end
-      if not name then
-        name = s.sign_text and s.sign_text..s.sign_hl_group
-        s.ns = nsmap[s.ns_id]
-      end
-      s.wtext = s.sign_text:gsub("%s", "")
-      s.segment = cache and sign_cache[s.sign_name] or sign_assign_segment(s, win)
+local function sign_cache_add(win, s)
+  local name = s.sign_name
+  if s.sign_text then
+    if not s.sign_hl_group then s.sign_hl_group = "NoTexthl" end
+    if not name then
+      name = s.sign_text and s.sign_text..s.sign_hl_group
+      s.ns = nsmap[s.ns_id]
     end
-    if s.segment and signsegments[s.segment].colwidth == 1 then s.sign_text = s.wtext end
-    if name then sign_cache[name] = s end
+    s.wtext = s.sign_text:gsub("%s", "")
+    s.segment = sign_assign_segment(s, win)
   end
+  if s.segment and signsegments[s.segment].colwidth == 1 then s.sign_text = s.wtext end
+  if name then sign_cache[name] = s end
+  return s
 end
 
 --- Store click args and fn.getmousepos() in table.
@@ -124,16 +121,12 @@ end
 local function get_sign_action_inner(args)
   local text = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
   -- When empty space is clicked in the sign column, try one cell to the left
-  if text == " " then
-    text = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1)
-  end
+  if text == " " then text = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1) end
 
   local row = args.mousepos.line - 1
-  local signs = a.nvim_buf_get_extmarks(0, -1, {row, 0}, {row, -1}, {type = "sign", details = true})
-  for i = 1, #signs do
-    local s = signs[i][4]
-    if s.sign_text:gsub("%s", "") == text then
-      call_click_func(s.sign_name or nsmap[s.ns_id], args)
+  for _, s in ipairs(a.nvim_buf_get_extmarks(0, -1, {row, 0}, {row, -1}, {type = "sign", details = true})) do
+    if s[4].sign_text:gsub("%s", "") == text then
+      call_click_func(s[4].sign_name or nsmap[s[4].ns_id], args)
       return
     end
   end
@@ -165,8 +158,7 @@ local function place_signs(win, signs)
     local s = signs[i][4]
     local name = s.sign_name or s.sign_text and s.sign_text..s.sign_hl_group
     if not name then goto nextsign end
-    if not sign_cache[name] then sign_cache_add(win, {signs[i]}) end
-    local sign = sign_cache[name]
+    local sign = sign_cache[name] or sign_cache_add(win, signs[i][4])
     if not sign.segment then goto nextsign end
     local ss = signsegments[sign.segment]
     local wss = ss.wins[win]
@@ -181,17 +173,19 @@ local function place_signs(win, signs)
   end
 end
 
+local opts = {}
 -- Update arguments passed to function text segments
 local function update_callargs(args, win, tick)
+  opts.win = win
   local fcs = Ol.fcs:get()
-  local culopt = a.nvim_get_option_value("culopt", {win = win})
+  local culopt = a.nvim_get_option_value("culopt", opts)
   local buf = a.nvim_win_get_buf(win)
   args.buf = buf
   args.tick = tick
-  args.nu = a.nvim_get_option_value("nu", {win = win})
-  args.rnu = a.nvim_get_option_value("rnu", {win = win})
-  args.cul = a.nvim_get_option_value("cul", {win = win}) and (culopt:find("nu") or culopt:find("bo"))
-  args.sclnu = lnumfunc and a.nvim_get_option_value("scl", {win = win}):find("nu")
+  args.nu = a.nvim_get_option_value("nu", opts)
+  args.rnu = a.nvim_get_option_value("rnu", opts)
+  args.cul = a.nvim_get_option_value("cul", opts) and (culopt:find("nu") or culopt:find("bo"))
+  args.sclnu = lnumfunc and a.nvim_get_option_value("scl", opts):find("nu")
   args.fold.sep = fcs.foldsep or "│"
   args.fold.open = fcs.foldopen or "-"
   args.fold.close = fcs.foldclose or "+"
@@ -205,8 +199,8 @@ local function update_callargs(args, win, tick)
       local ss = signsegments[i]
       local wss = ss.wins[win]
       if ss.lnum and args.sclnu ~= wss.sclnu then
+        sign_cache = {}
         wss.sclnu = args.sclnu
-        sign_cache_add(win, signs, false)
       end
       wss.width = 0
       wss.signs = {}
@@ -223,6 +217,7 @@ local function update_callargs(args, win, tick)
   end
 end
 
+local formatstr, formatargret, formatargs, formatargcount
 --- Return 'statuscolumn' option value (%! item).
 local function get_statuscol_string()
   local win = g.statusline_winid

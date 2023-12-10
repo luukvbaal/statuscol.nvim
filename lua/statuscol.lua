@@ -171,7 +171,7 @@ local function get_lnum_action(minwid, clicks, button, mods)
   local cargs = callargs[args.mousepos.winid]
   if lnumfunc and cargs.sclnu then
     local placed = f.sign_getplaced(cargs.buf, {group = "*", lnum = args.mousepos.line})
-    if #placed[1].signs > 0 then
+    if placed and #placed[1].signs > 0 then
       get_sign_action_inner(args)
       return
     end
@@ -185,8 +185,11 @@ local function place_signs(win, signs, ext)
     local s = ext and signs[i][4] or signs[i]
     local name = ext and s.sign_text and s.sign_text..s.sign_hl_group or s.name
     if ext and not name then goto nextsign end
-    if not sign_cache[name] then update_sign_defined(win, ext and signs) end
     local sign = sign_cache[name]
+    if not sign then
+      update_sign_defined(win, ext and signs)
+      goto nextsign
+    end
     if not sign.segment then goto nextsign end
     local ss = signsegments[sign.segment]
     local wss = ss.wins[win]

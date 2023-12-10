@@ -12,7 +12,8 @@ Table of Contents                                *statuscol-table-of-contents*
 1. statuscol.nvim                                   *statuscol-statuscol.nvim*
 
 Status column plugin that provides a configurable |'statuscolumn'| and click
-handlers. Requires Neovim >= 0.9.
+handlers. Requires Neovim >= 0.9. Recommended to use 0.10 branch with Neovim
+0.10 nightly builds.
 
 
 USAGE                                         *statuscol-statuscol.nvim-usage*

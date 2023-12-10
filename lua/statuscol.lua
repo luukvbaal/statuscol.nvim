@@ -187,7 +187,7 @@ local function place_signs(win, signs, ext)
     if ext and not name then goto nextsign end
     if not sign_cache[name] then update_sign_defined(win, ext and signs) end
     local sign = sign_cache[name]
-    if not sign.segment then goto nextsign end
+    if not sign or not sign.segment then goto nextsign end
     local ss = signsegments[sign.segment]
     local wss = ss.wins[win]
     local sss = wss.signs

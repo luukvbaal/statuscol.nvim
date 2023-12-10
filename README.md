@@ -1,7 +1,7 @@
 # statuscol.nvim
 
 Status column plugin that provides a configurable ['statuscolumn'](https://neovim.io/doc/user/options.html#'statuscolumn') and click handlers.
-Requires Neovim >= 0.9.
+Requires Neovim >= 0.9. Recommended to use 0.10 branch with Neovim 0.10 nightly builds.
 
 <!-- panvimdoc-ignore-start -->
 

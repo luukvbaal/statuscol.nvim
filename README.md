@@ -1,7 +1,7 @@
 # statuscol.nvim
 
 Status column plugin that provides a configurable ['statuscolumn'](https://neovim.io/doc/user/options.html#'statuscolumn') and click handlers.
-Requires Neovim >= 0.9.
+Requires Neovim >= 0.10.
 
 <!-- panvimdoc-ignore-start -->
 
@@ -250,8 +250,8 @@ Below follows a list of builtin click actions.
 |FoldClose/Other|Right||Delete fold|
 |FoldClose/Other|Right|<kbd>clickmod</kbd>|Delete fold recursively|
 |Fold*|Middle||Create fold in range(click twice)|
-|Diagnostic*|Left||Open diagnostic float|
-|Diagnostic*|Middle||Select available code action|
+|/*diagnostic/signs|Left||Open diagnostic float|
+|/*diagnostic/signs|Middle||Select available code action|
 |GitSigns*/gitsigns_extmark_signs_|Left||Preview hunk|
 |GitSigns*/gitsigns_extmark_signs_|Middle||Reset hunk|
 |GitSigns*/gitsigns_extmark_signs_|Right||Stage hunk|

@@ -105,7 +105,7 @@ local function get_click_args(minwid, clicks, button, mods)
 end
 
 local function call_click_func(name, args)
-  local handler = cfg.clickhandlers[name]
+  local handler = cfg.clickhandlers[name] or cfg.clickhandlers[name:match('diagnostic/signs')]
   if handler then S(function() handler(args) end) end
 end
 
@@ -279,10 +279,7 @@ function M.setup(user)
     DapBreakpointRejected   = builtin.toggle_breakpoint,
     DapBreakpoint           = builtin.toggle_breakpoint,
     DapBreakpointCondition  = builtin.toggle_breakpoint,
-    DiagnosticSignError     = builtin.diagnostic_click,
-    DiagnosticSignHint      = builtin.diagnostic_click,
-    DiagnosticSignInfo      = builtin.diagnostic_click,
-    DiagnosticSignWarn      = builtin.diagnostic_click,
+    ["diagnostic/signs"]    = builtin.diagnostic_click,
     gitsigns_extmark_signs_ = builtin.gitsigns_click,
     GitSignsTopdelete       = builtin.gitsigns_click,
     GitSignsUntracked       = builtin.gitsigns_click,

@@ -44,12 +44,13 @@ local function update_sign_defined(win, ext, reassign)
   local signs = ext or f.sign_getdefined()
   for i = 1, #signs do
     local s = ext and signs[i][4] or signs[i]
-    local name = ext and s.sign_text and s.sign_text..s.sign_hl_group or s.name
+    local name = s.name or s.sign_text
     if s.sign_text or s.text then
       if ext then
         s.text = s.sign_text
         if not idmap[s.ns_id] then update_nsidmap() end
         s.ns = idmap[s.ns_id]
+        if s.sign_hl_group then name = name..s.sign_hl_group end
       end
       s.wtext = s.text:gsub("%s", "")
       s.texthl = ext and s.sign_hl_group or s.texthl or "NoTexthl"
@@ -183,8 +184,9 @@ end
 local function place_signs(win, signs, ext)
   for i = 1, #signs do
     local s = ext and signs[i][4] or signs[i]
-    local name = ext and s.sign_text and s.sign_text..s.sign_hl_group or s.name
-    if ext and not name then goto nextsign end
+    local name = s.name or s.sign_text
+    if not name then goto nextsign end
+    if ext and s.sign_hl_group then name = name..s.sign_hl_group end
     if not sign_cache[name] then update_sign_defined(win, ext and signs) end
     local sign = sign_cache[name]
     if not sign or not sign.segment then goto nextsign end

@@ -165,11 +165,16 @@ local function place_signs(win, signs)
     local wss = ss.wins[win]
     local sss = wss.signs
     local lnum = signs[i][2] + 1
-    local width = (sss[lnum] and #sss[lnum] or 0) + 1
-    if width > ss.maxwidth then goto nextsign end
     if not sss[lnum] then sss[lnum] = {} end
-    if wss.width < width then wss.width = width end
-    sss[lnum][width] = sign
+    -- Insert by priority. Potentially remove when nvim_buf_get_extmarks() can return sorted list.
+    for j = 1, ss.maxwidth do
+      if not sss[lnum][j] or s.priority > sss[lnum][j].priority then
+        sss[lnum][ss.maxwidth] = nil
+        table.insert(sss[lnum], j, sign)
+        if wss.width < j then wss.width = j end
+        break
+      end
+    end
     ::nextsign::
   end
 end

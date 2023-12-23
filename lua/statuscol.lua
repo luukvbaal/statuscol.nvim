@@ -76,9 +76,8 @@ local sign_cache = {}
 local function sign_cache_add(win, s)
   local name = s.sign_name
   if s.sign_text then
-    if not s.sign_hl_group then s.sign_hl_group = "NoTexthl" end
     if not name then
-      name = s.sign_text and s.sign_text..s.sign_hl_group
+      name = s.sign_text..s.sign_hl_group
       s.ns = nsmap[s.ns_id]
     end
     s.wtext = s.sign_text:gsub("%s", "")
@@ -105,7 +104,7 @@ local function get_click_args(minwid, clicks, button, mods)
 end
 
 local function call_click_func(name, args)
-  local handler = cfg.clickhandlers[name] or cfg.clickhandlers[name:match('diagnostic/signs')]
+  local handler = cfg.clickhandlers[name] or cfg.clickhandlers[name:match("diagnostic/signs")]
   if handler then S(function() handler(args) end) end
 end
 
@@ -156,8 +155,10 @@ end
 local function place_signs(win, signs)
   for i = 1, #signs do
     local s = signs[i][4]
-    local name = s.sign_name or s.sign_text and s.sign_text..s.sign_hl_group
+    local name = s.sign_name or s.sign_text
     if not name then goto nextsign end
+    if not s.sign_hl_group then s.sign_hl_group = "NoTexthl" end
+    if not s.sign_name then name = name..s.sign_hl_group end
     local sign = sign_cache[name] or sign_cache_add(win, signs[i][4])
     if not sign.segment then goto nextsign end
     local ss = signsegments[sign.segment]

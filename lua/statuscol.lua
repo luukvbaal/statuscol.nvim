@@ -119,9 +119,10 @@ local function get_sign_action_inner(args)
   for _, s in ipairs(a.nvim_buf_get_extmarks(0, -1, {row, 0}, {row, -1}, {type = "sign", details = true})) do
     if s[4].sign_text and s[4].sign_text:gsub("%s", "") == text then
       call_click_func(s[4].sign_name or nsmap[s[4].ns_id], args)
-      return
+      return true
     end
   end
+  return false
 end
 
 --- Execute sign column click callback.
@@ -134,17 +135,11 @@ end
 local function get_lnum_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
   local cargs = callargs[args.mousepos.winid]
-  if lnumfunc and cargs.sclnu then
-    local row = args.mousepos.line - 1
-    if #a.nvim_buf_get_extmarks(0, -1, {row, 0}, {row, -1}, {type = "sign"}) > 0 then
-      get_sign_action_inner(args)
-      return
-    end
-  end
+  if lnumfunc and cargs.sclnu and get_sign_action_inner(args) then return end
   call_click_func("Lnum", args)
 end
 
---- Place signs in sign segments.
+--- Place signs with sign text in sign segments.
 local function place_signs(win, signs)
   for i = 1, #signs do
     local s = signs[i][4]
@@ -176,16 +171,16 @@ end
 local opts = {}
 -- Update arguments passed to function text segments
 local function update_callargs(args, win, tick)
-  opts.win = win
-  local fcs = Ol.fcs:get()
-  local culopt = a.nvim_get_option_value("culopt", opts)
   local buf = a.nvim_win_get_buf(win)
   args.buf = buf
   args.tick = tick
+  opts.win = win
   args.nu = a.nvim_get_option_value("nu", opts)
   args.rnu = a.nvim_get_option_value("rnu", opts)
+  local culopt = a.nvim_get_option_value("culopt", opts)
   args.cul = a.nvim_get_option_value("cul", opts) and (culopt:find("nu") or culopt:find("bo"))
   args.sclnu = lnumfunc and a.nvim_get_option_value("scl", opts):find("nu")
+  local fcs = Ol.fcs:get()
   args.fold.sep = fcs.foldsep or "│"
   args.fold.open = fcs.foldopen or "-"
   args.fold.close = fcs.foldclose or "+"
@@ -254,8 +249,8 @@ local function get_statuscol_string()
 end
 
 function M.setup(user)
-  if f.has("nvim-0.9") == 0 then
-    vim.notify("statuscol.nvim requires Neovim version >= 0.9", vim.log.levels.WARN)
+  if f.has("nvim-0.10") == 0 then
+    vim.notify("statuscol.nvim requires Neovim version >= 0.10", vim.log.levels.WARN)
     return
   end
 

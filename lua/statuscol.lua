@@ -73,19 +73,12 @@ end
 
 local sign_cache = {}
 --- Update sign cache and assign segment to signs.
-local function sign_cache_add(win, s)
-  local name = s.sign_name
-  if s.sign_text then
-    if not name then
-      name = s.sign_text..s.sign_hl_group
-      s.ns = nsmap[s.ns_id]
-    end
-    s.wtext = s.sign_text:gsub("%s", "")
-    s.segment = sign_assign_segment(s, win)
-  end
+local function sign_cache_add(win, s, name)
+  if not s.sign_name then s.ns = nsmap[s.ns_id] end
+  s.wtext = s.sign_text:gsub("%s", "")
+  s.segment = sign_assign_segment(s, win)
   if s.segment and signsegments[s.segment].colwidth == 1 then s.sign_text = s.wtext end
-  if name then sign_cache[name] = s end
-  return s
+  sign_cache[name] = s
 end
 
 --- Store click args and fn.getmousepos() in table.
@@ -124,7 +117,7 @@ local function get_sign_action_inner(args)
 
   local row = args.mousepos.line - 1
   for _, s in ipairs(a.nvim_buf_get_extmarks(0, -1, {row, 0}, {row, -1}, {type = "sign", details = true})) do
-    if s[4].sign_text:gsub("%s", "") == text then
+    if s[4].sign_text and s[4].sign_text:gsub("%s", "") == text then
       call_click_func(s[4].sign_name or nsmap[s[4].ns_id], args)
       return
     end
@@ -155,11 +148,12 @@ end
 local function place_signs(win, signs)
   for i = 1, #signs do
     local s = signs[i][4]
+    if not s.sign_text then goto nextsign end
     local name = s.sign_name or s.sign_text
-    if not name then goto nextsign end
     if not s.sign_hl_group then s.sign_hl_group = "NoTexthl" end
     if not s.sign_name then name = name..s.sign_hl_group end
-    local sign = sign_cache[name] or sign_cache_add(win, signs[i][4])
+    if not sign_cache[name] then sign_cache_add(win, s, name) end
+    local sign = sign_cache[name]
     if not sign.segment then goto nextsign end
     local ss = signsegments[sign.segment]
     local wss = ss.wins[win]

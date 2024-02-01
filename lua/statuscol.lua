@@ -212,7 +212,7 @@ local function update_callargs(args, win, tick)
   end
 end
 
-local formatstr, formatargret, formatargs, formatargcount
+local formatstr, formatargret, segments, segmentcount
 --- Return 'statuscolumn' option value (%! item).
 local function get_statuscol_string()
   local win = g.statusline_winid
@@ -239,10 +239,10 @@ local function get_statuscol_string()
     update_callargs(args, win, tick)
   end
 
-  for i = 1, formatargcount do
-    local fa = formatargs[i]
-    formatargret[i] = (fa.cond == true or fa.cond(args))
-      and (fa.textfunc and fa.text(args, fa) or fa.text) or ""
+  for i = 1, segmentcount do
+    local s = segments[i]
+    formatargret[i] = (s.cond == true or s.cond(args))
+      and (s.textfunc and s.text(args, s) or s.text) or ""
   end
 
   return formatstr:format(unpack(formatargret))
@@ -260,10 +260,10 @@ function M.setup(user)
   C = ffi.C
   callargs = {}
   formatstr = ""
-  formatargs = {}
+  segments = {}
   signsegments = {}
   formatargret = {}
-  formatargcount = 0
+  segmentcount = 0
   signsegmentcount = 0
 
   cfg.clickhandlers = {
@@ -286,7 +286,7 @@ function M.setup(user)
   if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
   builtin.init(cfg)
 
-  local segments = cfg.segments or {
+  local cfgsegments = cfg.segments or {
     -- Default segments (fold -> sign -> line number -> separator)
     {text = {"%C"}, click = "v:lua.ScFa"},
     {text = {"%s"}, click = "v:lua.ScSa"},
@@ -301,8 +301,8 @@ function M.setup(user)
   -- "segments" here and convert it to a format string. Only the variable
   -- elements are evaluated each redraw.
   local setscl
-  for i = 1, #segments do
-    local segment = segments[i]
+  for i = 1, #cfgsegments do
+    local segment = cfgsegments[i]
     if segment.text and contains(segment.text, builtin.lnumfunc) then
       lnumfunc = true
       segment.sign = segment.sign or {name = {".*"}, text = {".*"}}
@@ -340,8 +340,8 @@ function M.setup(user)
         end
         if type(text) == "function" or type(condition) == "function" then
           formatstr = formatstr.."%s"
-          formatargcount = formatargcount + 1
-          formatargs[formatargcount] = {
+          segmentcount = segmentcount + 1
+          segments[segmentcount] = {
             text = text,
             textfunc = type(text) == "function",
             cond = condition,

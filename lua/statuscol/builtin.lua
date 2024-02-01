@@ -7,9 +7,9 @@ local foldmarker, thou, culright, ffi, C, clickmod
 local M = {}
 
 --- Return line number in configured format.
-function M.lnumfunc(args, fa)
-  if args.sclnu and fa.sign and fa.sign.wins[args.win].signs[args.lnum] then
-    return "%="..M.signfunc(args, fa)
+function M.lnumfunc(args, segment)
+  if args.sclnu and segment.sign and segment.sign.wins[args.win].signs[args.lnum] then
+    return "%="..M.signfunc(args, segment)
   end
   if not args.rnu and not args.nu then return "" end
   if args.virtnum ~= 0 then return "%=" end
@@ -60,8 +60,8 @@ function M.foldfunc(args)
 end
 
 --- Return sign column in configured format.
-function M.signfunc(args, formatarg)
-  local ss = formatarg.sign
+function M.signfunc(args, segment)
+  local ss = segment.sign
   local wss = ss.wins[args.win]
   if args.virtnum ~= 0 and not ss.wrap then return wss.empty.."%*" end
   local sss = wss.signs[args.lnum]

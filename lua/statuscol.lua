@@ -141,19 +141,31 @@ end
 
 --- Place signs with sign text in sign segments.
 local function place_signs(win, signs)
+  local lines = {}
   for i = 1, #signs do
     local s = signs[i][4]
     if not s.sign_text then goto nextsign end
+
     local name = s.sign_name or s.sign_text
     if not s.sign_hl_group then s.sign_hl_group = "NoTexthl" end
     if not s.sign_name then name = name..s.sign_hl_group end
     if not sign_cache[name] then sign_cache_add(win, s, name) end
     local sign = sign_cache[name]
     if not sign.segment then goto nextsign end
+
     local ss = signsegments[sign.segment]
     local wss = ss.wins[win]
     local sss = wss.signs
     local lnum = signs[i][2] + 1
+
+    if ss.foldclosed then
+      if not lines[lnum] then lines[lnum] = f.foldclosed(lnum) end
+      if lines[lnum] > 0 then
+        lnum = lines[lnum]
+        for j = lnum, f.foldclosedend(lnum) do lines[j] = lnum end
+      end
+    end
+
     if not sss[lnum] then sss[lnum] = {} end
     -- Insert by priority. Potentially remove when nvim_buf_get_extmarks() can return sorted list.
     for j = 1, ss.maxwidth do
@@ -323,6 +335,7 @@ function M.setup(user)
       ss.maxwidth = ss.maxwidth or 1
       ss.colwidth = ss.colwidth or 2
       ss.fillchar = ss.fillchar or " "
+      ss.foldclosed = ss.foldclosed or false
       if ss.fillcharhl then ss.fillcharhl = "%#"..ss.fillcharhl.."#" end
       if setscl ~= false then setscl = true end
       if not segment.text then segment.text = {builtin.signfunc} end

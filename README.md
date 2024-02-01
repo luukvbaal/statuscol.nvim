@@ -124,6 +124,7 @@ Each segment can contain the following elements:
                          -- virtual or wrapped part of a line (when v:virtnum != 0).
     fillchar = " ",      -- character used to fill a segment with less signs than maxwidth
     fillcharhl = nil,    -- highlight group used for fillchar (SignColumn/CursorLineSign if omitted)
+    foldclosed = false,  -- when true, show signs from lines in a closed fold on the first line
   }
 }
 ```

@@ -48,7 +48,9 @@ function M.foldfunc(args)
   -- For each column, add a foldopen, foldclosed, foldsep or padding char
   local range = level < width and level or width
   for col = 1, range do
-    if closed and (col == level or col == width) then
+    if args.virtnum ~= 0 then
+      string = string..args.fold.sep
+    elseif closed and (col == level or col == width) then
       string = string..args.fold.close
     elseif foldinfo.start == args.lnum and first_level + col > foldinfo.llevel then
       string = string..args.fold.open

@@ -175,7 +175,7 @@ require("statuscol").setup({
         function(args)     -- shown only for the current window
           return vim.api.nvim_get_current_win() == args.win
         end,
-        builtin.notempty,  -- only shown when the rest of the statuscolumn is not empty
+        builtin.not_empty,  -- only shown when the rest of the statuscolumn is not empty
       },
     }
   }

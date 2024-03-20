@@ -162,7 +162,7 @@ local function place_signs(win, signs)
       if not lines[lnum] then lines[lnum] = f.foldclosed(lnum) end
       if lines[lnum] > 0 then
         lnum = lines[lnum]
-        for j = lnum, f.foldclosedend(lnum) do lines[j] = lnum end
+        for j = lnum + 1, f.foldclosedend(lnum) do lines[j] = lnum end
       end
     end
 

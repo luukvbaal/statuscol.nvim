@@ -192,11 +192,13 @@ local function update_callargs(args, win, tick)
   local culopt = a.nvim_get_option_value("culopt", opts)
   args.cul = a.nvim_get_option_value("cul", opts) and (culopt:find("nu") or culopt:find("bo"))
   args.sclnu = lnumfunc and a.nvim_get_option_value("scl", opts):find("nu")
-  local fcs = Ol.fcs:get()
-  args.fold.sep = fcs.foldsep or "│"
-  args.fold.open = fcs.foldopen or "-"
-  args.fold.close = fcs.foldclose or "+"
   args.fold.width = C.compute_foldcolumn(args.wp, 0)
+  if args.fold.width > 0 then
+    local fcs = a.nvim_win_call(args.win, function() return Ol.fcs:get() end)
+    args.fold.sep = fcs.foldsep or "│"
+    args.fold.open = fcs.foldopen or "-"
+    args.fold.close = fcs.foldclose or "+"
+  end
   args.empty = C.win_col_off(args.wp) == 0
   if signsegmentcount - ((lnumfunc and not args.sclnu) and 1 or 0) > 0 then
     -- Retrieve signs for the entire buffer and store in "signsegments"

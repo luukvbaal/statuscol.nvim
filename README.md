@@ -23,7 +23,7 @@ For example with lazy.nvim:
       -- segments = {
       --   { text = { builtin.foldfunc }, click = "v:lua.ScFa" },
       --   {
-      --     sign = { name = { "Diagnostic" }, maxwidth = 2, auto = true },
+      --     sign = { namespace = { "diagnostic/signs" }, maxwidth = 2, auto = true },
       --     click = "v:lua.ScSa"
       --   },
       --   { text = { builtin.lnumfunc }, click = "v:lua.ScLa", },
@@ -110,7 +110,7 @@ Each segment can contain the following elements:
   condition = { true },  -- table of booleans or functions returning a boolean
   sign = {               -- table of fields that configure a sign segment
     -- at least one of "name", "text", and "namespace" is required
-    -- legacy signs are matched against the defined sign name e.g. "DiagnosticSignError"
+    -- legacy signs are matched against the defined sign name
     -- extmark signs can be matched against either the namespace or the sign text itself
     name = { ".*" },     -- table of lua patterns to match the legacy sign name against
     text = { ".*" },     -- table of lua patterns to match the extmark sign text against

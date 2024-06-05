@@ -289,13 +289,7 @@ function M.setup(user)
     DapBreakpoint           = builtin.toggle_breakpoint,
     DapBreakpointCondition  = builtin.toggle_breakpoint,
     ["diagnostic/signs"]    = builtin.diagnostic_click,
-    gitsigns_extmark_signs_ = builtin.gitsigns_click,
-    GitSignsTopdelete       = builtin.gitsigns_click,
-    GitSignsUntracked       = builtin.gitsigns_click,
-    GitSignsAdd             = builtin.gitsigns_click,
-    GitSignsChange          = builtin.gitsigns_click,
-    GitSignsChangedelete    = builtin.gitsigns_click,
-    GitSignsDelete          = builtin.gitsigns_click,
+    gitsigns                = builtin.gitsigns_click,
   }
   if user then cfg = vim.tbl_deep_extend("force", cfg, user) end
   builtin.init(cfg)

@@ -23,7 +23,7 @@ For example with lazy.nvim:
       -- segments = {
       --   { text = { builtin.foldfunc }, click = "v:lua.ScFa" },
       --   {
-      --     sign = { name = { "Diagnostic" }, maxwidth = 2, auto = true },
+      --     sign = { namespace = { "diagnostic/signs" }, maxwidth = 2, auto = true },
       --     click = "v:lua.ScSa"
       --   },
       --   { text = { builtin.lnumfunc }, click = "v:lua.ScLa", },
@@ -82,17 +82,8 @@ local cfg = {
     DapBreakpointRejected   = builtin.toggle_breakpoint,
     DapBreakpoint           = builtin.toggle_breakpoint,
     DapBreakpointCondition  = builtin.toggle_breakpoint,
-    DiagnosticSignError     = builtin.diagnostic_click,
-    DiagnosticSignHint      = builtin.diagnostic_click,
-    DiagnosticSignInfo      = builtin.diagnostic_click,
-    DiagnosticSignWarn      = builtin.diagnostic_click,
-    GitSignsTopdelete       = builtin.gitsigns_click,
-    GitSignsUntracked       = builtin.gitsigns_click,
-    GitSignsAdd             = builtin.gitsigns_click,
-    GitSignsChange          = builtin.gitsigns_click,
-    GitSignsChangedelete    = builtin.gitsigns_click,
-    GitSignsDelete          = builtin.gitsigns_click,
-    gitsigns_extmark_signs_ = builtin.gitsigns_click,
+    ["diagnostic/signs"]    = builtin.diagnostic_click,
+    gitsigns                = builtin.gitsigns_click,
   },
 }
 ```
@@ -110,7 +101,7 @@ Each segment can contain the following elements:
   condition = { true },  -- table of booleans or functions returning a boolean
   sign = {               -- table of fields that configure a sign segment
     -- at least one of "name", "text", and "namespace" is required
-    -- legacy signs are matched against the defined sign name e.g. "DiagnosticSignError"
+    -- legacy signs are matched against the defined sign name e.g. "DapBreakpoint"
     -- extmark signs can be matched against either the namespace or the sign text itself
     name = { ".*" },     -- table of lua patterns to match the legacy sign name against
     text = { ".*" },     -- table of lua patterns to match the extmark sign text against
@@ -251,11 +242,11 @@ Below follows a list of builtin click actions.
 |FoldClose/Other|Right||Delete fold|
 |FoldClose/Other|Right|<kbd>clickmod</kbd>|Delete fold recursively|
 |Fold*|Middle||Create fold in range(click twice)|
-|/*diagnostic/signs|Left||Open diagnostic float|
-|/*diagnostic/signs|Middle||Select available code action|
-|GitSigns*/gitsigns_extmark_signs_|Left||Preview hunk|
-|GitSigns*/gitsigns_extmark_signs_|Middle||Reset hunk|
-|GitSigns*/gitsigns_extmark_signs_|Right||Stage hunk|
+|diagnostic/signs|Left||Open diagnostic float|
+|diagnostic/signs|Middle||Select available code action|
+|gitsigns|Left||Preview hunk|
+|gitsigns|Middle||Reset hunk|
+|gitsigns|Right||Stage hunk|
 
 Optional dependencies:
 

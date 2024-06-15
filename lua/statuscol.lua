@@ -351,7 +351,7 @@ function M.setup(user)
         local text = segment.text[j]
         if type(text) == "string" then
           if text:find("%%s") then setscl = false end
-          text = text:gsub("%%", "%%%%")
+          if type(condition) == "boolean" then text = text:gsub("%%", "%%%%") end
         end
         if type(text) == "function" or type(condition) == "function" then
           formatstr = formatstr.."%s"

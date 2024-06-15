@@ -97,7 +97,13 @@ local function get_click_args(minwid, clicks, button, mods)
 end
 
 local function call_click_func(name, args)
-  local handler = cfg.clickhandlers[name] or cfg.clickhandlers[name:match("diagnostic/signs")]
+  local handler = cfg.clickhandlers[name]
+  if not handler then
+    for match in pairs(cfg.clickhandlers) do
+      handler = cfg.clickhandlers[name:match(match)]
+      if handler then break end
+    end
+  end
   if handler then S(function() handler(args) end) end
 end
 

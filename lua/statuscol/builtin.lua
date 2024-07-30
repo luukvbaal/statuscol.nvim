@@ -73,7 +73,8 @@ function M.signfunc(args, segment)
   local signcount = #sss
   for i = 1, signcount do
     local s = sss[i]
-    text = text.."%#"..s.sign_hl_group.."#"..s.sign_text.."%*"
+    local hl_group = args.relnum == 0 and s.cursorline_hl_group or s.sign_hl_group
+    text = text.."%#"..hl_group.."#"..s.sign_text.."%*"
   end
   local pad = wss.padwidth - signcount
   if pad > 0 then

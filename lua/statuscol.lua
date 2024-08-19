@@ -418,7 +418,12 @@ function M.setup(user)
 
   if cfg.setopt then
     _G.StatusCol = get_statuscol_string
-    o.statuscolumn = "%!v:lua.StatusCol()"
+
+    -- also add it to the module
+    M.StatusCol = get_statuscol_string
+
+    -- Call the function through a require to make sure we're always loaded
+    o.statuscolumn = "%!v:lua.require('statuscol').StatusCol()"
     a.nvim_create_autocmd("WinClosed", {
       group = id,
       callback = function(args)

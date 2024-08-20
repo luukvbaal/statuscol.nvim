@@ -234,7 +234,7 @@ end
 
 local formatstr, formatargret, segments, segmentcount
 --- Return 'statuscolumn' option value (%! item).
-local function get_statuscol_string()
+M.get_statuscol_string = function()
   local win = g.statusline_winid
   local args = callargs[win]
   local tick = C.display_tick
@@ -417,8 +417,7 @@ function M.setup(user)
   local id = a.nvim_create_augroup("StatusCol", {})
 
   if cfg.setopt then
-    _G.StatusCol = get_statuscol_string
-    o.statuscolumn = "%!v:lua.StatusCol()"
+    o.statuscolumn = "%!v:lua.require('statuscol').get_statuscol_string()"
     a.nvim_create_autocmd("WinClosed", {
       group = id,
       callback = function(args)
@@ -462,5 +461,8 @@ function M.setup(user)
     })
   end
 end
+
+-- Restored session may set 'statuscolumn', requiring the plugin without calling setup.
+if not callargs then M.setup() end
 
 return M

@@ -91,6 +91,9 @@ local function get_click_args(minwid, clicks, button, mods)
     mods = mods,
     mousepos = f.getmousepos(),
   }
+  local text = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
+  -- When empty space is clicked try one cell to the left
+  args.text = text ~= " " and text or f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1)
   a.nvim_set_current_win(args.mousepos.winid)
   a.nvim_win_set_cursor(0, {args.mousepos.line, 0})
   return args
@@ -110,20 +113,15 @@ end
 --- Execute fold column click callback.
 local function get_fold_action(minwid, clicks, button, mods)
   local args = get_click_args(minwid, clicks, button, mods)
-  local text = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
   local fold = callargs[args.mousepos.winid].fold
-  local type = text == fold.open and "FoldOpen" or text == fold.close and "FoldClose" or "FoldOther"
+  local type = args.text == fold.open and "FoldOpen" or args.text == fold.close and "FoldClose" or "FoldOther"
   call_click_func(type, args)
 end
 
 local function get_sign_action_inner(args)
-  local text = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol)
-  -- When empty space is clicked in the sign column, try one cell to the left
-  if text == " " then text = f.screenstring(args.mousepos.screenrow, args.mousepos.screencol - 1) end
-
   local row = args.mousepos.line - 1
   for _, s in ipairs(a.nvim_buf_get_extmarks(0, -1, {row, 0}, {row, -1}, {type = "sign", details = true})) do
-    if s[4].sign_text and s[4].sign_text:gsub("%s", "") == text then
+    if s[4].sign_text and s[4].sign_text:gsub("%s", "") == args.text then
       call_click_func(s[4].sign_name or nsmap[s[4].ns_id], args)
       return true
     end

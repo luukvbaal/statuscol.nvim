@@ -68,6 +68,7 @@ function M.signfunc(args, segment)
   if args.virtnum ~= 0 and not ss.wrap then return wss.empty.."%*" end
   local sss = wss.signs[args.lnum]
   local nonhl = ss.fillcharhl or (args.cul and args.relnum == 0 and "%#CursorLineSign#") or "%#SignColumn#"
+  if type(ss.auto) == "string" and wss.padwidth == 0 then return nonhl..ss.auto.."%*" end
   if not sss then return nonhl..wss.empty.."%*" end
   local text = ""
   local signcount = #sss

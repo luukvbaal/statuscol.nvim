@@ -109,8 +109,8 @@ Each segment can contain the following elements:
     -- below values list the default when omitted:
     maxwidth = 1,        -- maximum number of signs that will be displayed in this segment
     colwidth = 2,        -- number of display cells per sign in this segment
-    auto = false,        -- when true, the segment will not be drawn if no signs matching
-                         -- the pattern are currently placed in the buffer.
+    auto = false,        -- boolean or string indicating what will be drawn when no signs
+                         -- matching the pattern are currently placed in the buffer.
     wrap = false,        -- when true, signs in this segment will also be drawn on the
                          -- virtual or wrapped part of a line (when v:virtnum != 0).
     fillchar = " ",      -- character used to fill a segment with less signs than maxwidth

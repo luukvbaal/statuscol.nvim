@@ -100,14 +100,13 @@ local function get_click_args(minwid, clicks, button, mods)
 end
 
 local function call_click_func(name, args)
-  local handler = cfg.clickhandlers[name]
-  if not handler then
-    for match in pairs(cfg.clickhandlers) do
-      handler = cfg.clickhandlers[name:match(match)]
-      if handler then break end
+  for pat, func in pairs(cfg.clickhandlers) do
+    local handler = cfg.clickhandlers[name] or name:match(pat) and func
+    if handler then
+      S(function() handler(args) end)
+      break
     end
   end
-  if handler then S(function() handler(args) end) end
 end
 
 --- Execute fold column click callback.

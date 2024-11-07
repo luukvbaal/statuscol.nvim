@@ -60,8 +60,8 @@ local cfg = {
   thousands = false,     -- or line number thousands separator string ("." / ",")
   relculright = false,   -- whether to right-align the cursor line number with 'relativenumber' set
   -- Builtin 'statuscolumn' options
-  ft_ignore = nil,       -- lua table with 'filetype' values for which 'statuscolumn' will be unset
-  bt_ignore = nil,       -- lua table with 'buftype' values for which 'statuscolumn' will be unset
+  ft_ignore = nil,       -- Lua table with 'filetype' values for which 'statuscolumn' will be unset
+  bt_ignore = nil,       -- Lua table with 'buftype' values for which 'statuscolumn' will be unset
   -- Default segments (fold -> sign -> line number + separator), explained below
   segments = {
     { text = { "%C" }, click = "v:lua.ScFa" },
@@ -74,7 +74,7 @@ local cfg = {
   },
   clickmod = "c",         -- modifier used for certain actions in the builtin clickhandlers:
                           -- "a" for Alt, "c" for Ctrl and "m" for Meta.
-  clickhandlers = {       -- builtin click handlers
+  clickhandlers = {       -- builtin click handlers, keys are pattern matched
     Lnum                    = builtin.lnum_click,
     FoldClose               = builtin.foldclose_click,
     FoldOpen                = builtin.foldopen_click,
@@ -103,9 +103,9 @@ Each segment can contain the following elements:
     -- at least one of "name", "text", and "namespace" is required
     -- legacy signs are matched against the defined sign name e.g. "DapBreakpoint"
     -- extmark signs can be matched against either the namespace or the sign text itself
-    name = { ".*" },     -- table of lua patterns to match the legacy sign name against
-    text = { ".*" },     -- table of lua patterns to match the extmark sign text against
-    namespace = { ".*" },-- table of lua patterns to match the extmark sign namespace against
+    name = { ".*" },     -- table of Lua patterns to match the legacy sign name against
+    text = { ".*" },     -- table of Lua patterns to match the extmark sign text against
+    namespace = { ".*" },-- table of Lua patterns to match the extmark sign namespace against
     -- below values list the default when omitted:
     maxwidth = 1,        -- maximum number of signs that will be displayed in this segment
     colwidth = 2,        -- number of display cells per sign in this segment
@@ -196,7 +196,7 @@ Feature requests/additions for the builtin providers are welcome if they can rea
 ### Custom click actions
 
 Custom sign/click action pairs can be passed through the `clickhandlers` table.
-Each element is the name of a sign, or `Lnum` and `FoldClose/Open/Other` for the number and fold columns.
+Each element is the name or pattern matching a sign (namespace), or `Lnum` and `FoldClose/Open/Other` for the number and fold columns.
 To modify the default actions, pass a table with the actions you want to overwrite to the `setup()` function:
 
 ```lua

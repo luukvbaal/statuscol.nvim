@@ -21,10 +21,12 @@ function M.lnumfunc(args, segment)
     lnum = reverse(lnum):gsub("%d%d%d", "%1"..thou):reverse():gsub("^%"..thou, "")
   end
 
+  lnum = tostring(lnum)
+  local pad = (' '):rep(args.nuw - #lnum)
   if args.relnum == 0 and not culright and args.rnu then
-    return lnum.."%="
+    return lnum..pad.."%="
   else
-    return "%="..lnum
+    return "%="..pad..lnum
   end
 end
 

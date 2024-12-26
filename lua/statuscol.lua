@@ -191,6 +191,7 @@ local function update_callargs(args, win, tick)
   args.tick = tick
   opts.win = win
   args.nu = a.nvim_get_option_value("nu", opts)
+  args.nuw = a.nvim_get_option_value("nuw", opts)
   args.rnu = a.nvim_get_option_value("rnu", opts)
   local culopt = a.nvim_get_option_value("culopt", opts)
   args.cul = a.nvim_get_option_value("cul", opts) and (culopt:find("nu") or culopt:find("bo"))

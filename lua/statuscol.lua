@@ -15,6 +15,7 @@ local cfg = {
   -- Builtin 'statuscolumn' options
   setopt = true,
   ft_ignore = nil,
+  bt_ignore = nil,
   clickmod = "c",
   clickhandlers = {},
 }
@@ -233,6 +234,8 @@ end
 local formatstr, formatargret, segments, segmentcount
 --- Return 'statuscolumn' option value (%! item).
 M.get_statuscol_string = function()
+  -- Restored session may set 'statuscolumn' and call this before setup().
+  if not callargs then return "" end
   local win = g.statusline_winid
   local args = callargs[win]
   local tick = C.display_tick
@@ -415,7 +418,18 @@ function M.setup(user)
   local id = a.nvim_create_augroup("StatusCol", {})
 
   if cfg.setopt then
-    o.statuscolumn = "%!v:lua.require('statuscol').get_statuscol_string()"
+    -- Go through all already open windows to set the option value.
+    local stc = "%!v:lua.require('statuscol').get_statuscol_string()"
+    a.nvim_set_option_value("stc", stc, {scope = 'global'})
+    for _, tab in ipairs(a.nvim_list_tabpages()) do
+      for _, win in ipairs(a.nvim_tabpage_list_wins(tab)) do
+        local buf = a.nvim_win_get_buf(win)
+        if not contains(cfg.ft_ignore or {}, a.nvim_get_option_value("ft", {buf = buf}))
+          and not contains(cfg.bt_ignore or {}, a.nvim_get_option_value("bt", {buf = buf})) then
+          a.nvim_set_option_value("stc", stc, {win = win})
+        end
+      end
+    end
     a.nvim_create_autocmd("WinClosed", {
       group = id,
       callback = function(args)
@@ -459,8 +473,5 @@ function M.setup(user)
     })
   end
 end
-
--- Restored session may set 'statuscolumn', requiring the plugin without calling setup.
-if not callargs then M.setup() end
 
 return M

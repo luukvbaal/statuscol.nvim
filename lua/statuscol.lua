@@ -163,11 +163,13 @@ local function place_signs(win, signs)
     local lnum = signs[i][2] + 1
 
     if ss.foldclosed then
-      if not lines[lnum] then lines[lnum] = f.foldclosed(lnum) end
-      if lines[lnum] > 0 then
-        lnum = lines[lnum]
-        for j = lnum + 1, f.foldclosedend(lnum) do lines[j] = lnum end
-      end
+      a.nvim_win_call(win, function()
+        if not lines[lnum] then lines[lnum] = f.foldclosed(lnum) end
+        if lines[lnum] > 0 then
+          lnum = lines[lnum]
+          for j = lnum + 1, f.foldclosedend(lnum) do lines[j] = lnum end
+        end
+      end)
     end
 
     if not sss[lnum] then sss[lnum] = {} end

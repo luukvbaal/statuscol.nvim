@@ -1,6 +1,5 @@
 local a = vim.api
 local f = vim.fn
-local g = vim.g
 local o = vim.o
 local Ol = vim.opt_local
 local S = vim.schedule
@@ -163,13 +162,11 @@ local function place_signs(win, signs)
     local lnum = signs[i][2] + 1
 
     if ss.foldclosed then
-      a.nvim_win_call(win, function()
-        if not lines[lnum] then lines[lnum] = f.foldclosed(lnum) end
-        if lines[lnum] > 0 then
-          lnum = lines[lnum]
-          for j = lnum + 1, f.foldclosedend(lnum) do lines[j] = lnum end
-        end
-      end)
+      if not lines[lnum] then lines[lnum] = f.foldclosed(lnum) end
+      if lines[lnum] > 0 then
+        lnum = lines[lnum]
+        for j = lnum + 1, f.foldclosedend(lnum) do lines[j] = lnum end
+      end
     end
 
     if not sss[lnum] then sss[lnum] = {} end
@@ -186,22 +183,21 @@ local function place_signs(win, signs)
   end
 end
 
-local opts = {}
 -- Update arguments passed to function text segments
 local function update_callargs(args, win, tick)
-  local buf = a.nvim_win_get_buf(win)
-  args.buf = buf
+  args.buf = a.nvim_get_current_buf()
+  args.actual_curwin = tonumber(vim.g.actual_curwin)
+  args.actual_curbuf = tonumber(vim.g.actual_curbuf)
   args.tick = tick
-  opts.win = win
-  args.nu = a.nvim_get_option_value("nu", opts)
-  args.nuw = a.nvim_get_option_value("nuw", opts)
-  args.rnu = a.nvim_get_option_value("rnu", opts)
-  local culopt = a.nvim_get_option_value("culopt", opts)
-  args.cul = a.nvim_get_option_value("cul", opts) and (culopt:find("nu") or culopt:find("bo"))
-  args.sclnu = lnumfunc and a.nvim_get_option_value("scl", opts):find("nu")
+  args.nu = a.nvim_get_option_value("nu", {})
+  args.nuw = a.nvim_get_option_value("nuw", {})
+  args.rnu = a.nvim_get_option_value("rnu", {})
+  local culopt = a.nvim_get_option_value("culopt", {})
+  args.cul = a.nvim_get_option_value("cul", {}) and (culopt:find("nu") or culopt:find("bo"))
+  args.sclnu = lnumfunc and a.nvim_get_option_value("scl", {}):find("nu")
   args.fold.width = C.compute_foldcolumn(args.wp, 0)
   if args.fold.width > 0 then
-    local fcs = a.nvim_win_call(args.win, function() return Ol.fcs:get() end)
+    local fcs = Ol.fcs:get()
     args.fold.sep = fcs.foldsep or "│"
     args.fold.open = fcs.foldopen or "-"
     args.fold.close = fcs.foldclose or "+"
@@ -210,7 +206,7 @@ local function update_callargs(args, win, tick)
   if signsegmentcount - ((lnumfunc and not args.sclnu) and 1 or 0) > 0 then
     -- Retrieve signs for the entire buffer and store in "signsegments"
     -- by line number. Only do this if a "signs" segment was configured.
-    local signs = a.nvim_buf_get_extmarks(buf, -1, 0, -1, {details = true, type = "sign"})
+    local signs = a.nvim_buf_get_extmarks(args.buf, -1, 0, -1, {details = true, type = "sign"})
     for i = 1, signsegmentcount do
       local ss = signsegments[i]
       local wss = ss.wins[win]
@@ -238,7 +234,7 @@ local formatstr, formatargret, segments, segmentcount
 M.get_statuscol_string = function()
   -- Restored session may set 'statuscolumn' and call this before setup().
   if not callargs then return "" end
-  local win = g.statusline_winid
+  local win = a.nvim_get_current_win()
   local args = callargs[win]
   local tick = C.display_tick
 
@@ -421,7 +417,7 @@ function M.setup(user)
 
   if cfg.setopt then
     -- Go through all already open windows to set the option value.
-    local stc = "%!v:lua.require('statuscol').get_statuscol_string()"
+    local stc = "%{%v:lua.require('statuscol').get_statuscol_string()%}"
     a.nvim_set_option_value("stc", stc, {scope = 'global'})
     for _, tab in ipairs(a.nvim_list_tabpages()) do
       for _, win in ipairs(a.nvim_tabpage_list_wins(tab)) do

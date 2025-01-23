@@ -103,27 +103,29 @@ can contain the following elements:
 
 - The `text` and `sign` elements are mutually exclusive, except when `text` contains `builtin.lnumfunc`. In this case a sign segment can be added to control what is displayed in the number segment for `'signcolumn' == "number"`.
 - The `text` and `condition` elements should have the same length.
-- `text` and `condition` functions are passed an `args` table with the following elements:
+- With `cfg.setop = true`, the |stl-%{| item is used to build the 'statuscolumn'. As such, Nvim will change the current buffer and window temporarily when evaluating the statuscolumn. This should be taken into acount in with `text` and `condition` functions which are passed an `args` table with the following elements:
 
 >lua
     {
-      lnum = 43,     -- v:lnum
-      relnum = 5,    -- v:relnum
-      virtnum = 0,   -- v:virtnum
-      buf = 1,       -- buffer handle
-      win = 1000,    -- window handle
-      nu = true,     -- 'number' option value
-      rnu = true,    -- 'relativenumber' option value
-      empty = true,  -- statuscolumn is currently empty
+      lnum = 43,             -- v:lnum
+      relnum = 5,            -- v:relnum
+      virtnum = 0,           -- v:virtnum
+      buf = 1,               -- buffer handle of drawn window
+      win = 1000,            -- window handle of drawn window
+      actual_curbuf = 1,     -- buffer handle of |g:actual_curwin|
+      actual_curwin = 1000,  -- window handle of |g:actual_curbuf|
+      nu = true,             -- 'number' option value
+      rnu = true,            -- 'relativenumber' option value
+      empty = true,          -- statuscolumn is currently empty
       fold = {
-        width = 1,   -- current width of the fold column
-        -- 'fillchars' option values:
-        close = "", -- foldclose
-        open = "",  -- foldopen
-        sep = " "    -- foldsep
+        width = 1,           -- current width of the fold column
+        -- 'fillchars        ' option values:
+        close = "",         -- foldclose
+        open = "",          -- foldopen
+        sep = " "            -- foldsep
       },
       -- FFI data:
-      tick = 251ULL, -- display_tick value
+      tick = 251ULL,         -- display_tick value
       wp = cdata<struct 112 *>: 0x560b56519a50 -- win_T pointer handle
     }
 <
@@ -212,7 +214,7 @@ function:
         end,
       }
     }
-    
+
     require("statuscol").setup(cfg)
 <
 

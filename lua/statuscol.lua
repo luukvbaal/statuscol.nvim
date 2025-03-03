@@ -293,7 +293,7 @@ function M.setup(user)
     DapBreakpointRejected   = builtin.toggle_breakpoint,
     DapBreakpoint           = builtin.toggle_breakpoint,
     DapBreakpointCondition  = builtin.toggle_breakpoint,
-    ["diagnostic/signs"]    = builtin.diagnostic_click,
+    ["diagnostic.signs"]    = builtin.diagnostic_click,
     gitsigns                = builtin.gitsigns_click,
   }
   if user then cfg = vim.tbl_deep_extend("force", cfg, user) end

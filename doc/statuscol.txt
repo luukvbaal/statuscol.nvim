@@ -107,23 +107,25 @@ can contain the following elements:
 
 >lua
     {
-      lnum = 43,     -- v:lnum
-      relnum = 5,    -- v:relnum
-      virtnum = 0,   -- v:virtnum
-      buf = 1,       -- buffer handle
-      win = 1000,    -- window handle
-      nu = true,     -- 'number' option value
-      rnu = true,    -- 'relativenumber' option value
-      empty = true,  -- statuscolumn is currently empty
+      lnum = 43,             -- v:lnum
+      relnum = 5,            -- v:relnum
+      virtnum = 0,           -- v:virtnum
+      buf = 1,               -- buffer handle of drawn window
+      win = 1000,            -- window handle of drawn window
+      actual_curbuf = 1,     -- buffer handle of |g:actual_curwin|
+      actual_curwin = 1000,  -- window handle of |g:actual_curbuf|
+      nu = true,             -- 'number' option value
+      rnu = true,            -- 'relativenumber' option value
+      empty = true,          -- statuscolumn is currently empty
       fold = {
-        width = 1,   -- current width of the fold column
+        width = 1,           -- current width of the fold column
         -- 'fillchars' option values:
-        close = "", -- foldclose
-        open = "",  -- foldopen
-        sep = " "    -- foldsep
+        close = "",         -- foldclose
+        open = "",          -- foldopen
+        sep = " "            -- foldsep
       },
       -- FFI data:
-      tick = 251ULL, -- display_tick value
+      tick = 251ULL,         -- display_tick value
       wp = cdata<struct 112 *>: 0x560b56519a50 -- win_T pointer handle
     }
 <
@@ -148,7 +150,7 @@ functions it is recommended to use them as well rather than e.g. accessing
           condition = {
             true,               -- always shown
             function(args)      -- shown only for the current window
-              return vim.api.nvim_get_current_win() == args.win
+              return args.actual_curwin == args.win
             end,
             builtin.not_empty,  -- only shown when the rest of the statuscolumn is not empty
           },

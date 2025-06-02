@@ -422,7 +422,8 @@ function M.setup(user)
     for _, tab in ipairs(a.nvim_list_tabpages()) do
       for _, win in ipairs(a.nvim_tabpage_list_wins(tab)) do
         local buf = a.nvim_win_get_buf(win)
-        if not contains(cfg.ft_ignore or {}, a.nvim_get_option_value("ft", {buf = buf}))
+        if not a.nvim_buf_get_name(buf):find("vim._extui")
+          and not contains(cfg.ft_ignore or {}, a.nvim_get_option_value("ft", {buf = buf}))
           and not contains(cfg.bt_ignore or {}, a.nvim_get_option_value("bt", {buf = buf})) then
           a.nvim_set_option_value("stc", stc, {win = win})
         end

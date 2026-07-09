@@ -116,6 +116,7 @@ Each segment can contain the following elements:
     fillchar = " ",      -- character used to fill a segment with less signs than maxwidth
     fillcharhl = nil,    -- highlight group used for fillchar (SignColumn/CursorLineSign if omitted)
     foldclosed = false,  -- when true, show signs from lines in a closed fold on the first line
+    align = "left",      -- "left"|"right": alignment when segment is partially filled
   }
 }
 ```

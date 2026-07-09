@@ -382,6 +382,7 @@ function M.setup(user)
       ss.notnamecount = 0
       ss.nottextcount = 0
       ss.notnamespacecount = 0
+      ss.rightalign = ss.align == 'right' and true
       for j = 1, signsegmentcount do
         if j ~= i then
           local sso = signsegments[j]

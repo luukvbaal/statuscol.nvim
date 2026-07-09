@@ -77,11 +77,13 @@ function M.signfunc(args, segment)
   for i = 1, signcount do
     local s = sss[i]
     local hl_group = args.relnum == 0 and s.cursorline_hl_group or s.sign_hl_group
-    text = text.."%#"..hl_group.."#"..s.sign_text.."%*"
+    text = ('%s%%#%s#%s%%*'):format(text, hl_group, s.sign_text)
   end
   local pad = wss.padwidth - signcount
   if pad > 0 then
-    text = text..nonhl..ss.fillchar:rep(pad * ss.colwidth).."%*"
+    local rightpad = ss.rightalign and '' or nonhl .. ss.fillchar:rep(pad * ss.colwidth)
+    local leftpad = ss.rightalign and nonhl .. ss.fillchar:rep(pad * ss.colwidth) or ''
+    text = ('%s%s%s%%*'):format(leftpad, text, rightpad)
   end
   return text
 end

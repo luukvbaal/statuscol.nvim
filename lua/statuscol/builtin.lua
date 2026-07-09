@@ -9,70 +9,90 @@ local M = {}
 --- Return line number in configured format.
 function M.lnumfunc(args, segment)
   if args.sclnu and segment.sign and segment.sign.wins[args.win].signs[args.lnum] then
-    return "%="..M.signfunc(args, segment)
+    return '%=' .. M.signfunc(args, segment)
   end
-  if not args.rnu and not args.nu then return "" end
-  if args.virtnum ~= 0 then return "%=" end
+  if not args.rnu and not args.nu then
+    return ''
+  end
+  if args.virtnum ~= 0 then
+    return '%='
+  end
 
-  local lnum = args.rnu and (args.relnum > 0 and args.relnum
-      or (args.nu and args.lnum or 0)) or args.lnum
+  local lnum = args.rnu and (args.relnum > 0 and args.relnum or (args.nu and args.lnum or 0))
+    or args.lnum
 
   if thou and lnum > 999 then
-    lnum = reverse(lnum):gsub("%d%d%d", "%1"..thou):reverse():gsub("^%"..thou, "")
+    lnum = reverse(lnum):gsub('%d%d%d', '%1' .. thou):reverse():gsub('^%' .. thou, '')
   end
 
   lnum = tostring(lnum)
   local pad = (' '):rep(args.nuw - #lnum)
   if args.relnum == 0 and not culright and args.rnu then
-    return lnum..pad.."%="
+    return lnum .. pad .. '%='
   else
-    return "%="..pad..lnum
+    return '%=' .. pad .. lnum
   end
 end
 
 --- Return fold column in configured format.
 function M.foldfunc(args)
   local width = args.fold.width
-  if width == 0 then return "" end
+  if width == 0 then
+    return ''
+  end
 
   local foldinfo = C.fold_info(args.wp, args.lnum)
-  local string = args.cul and args.relnum == 0 and "%#CursorLineFold#" or "%#FoldColumn#"
+  local string = args.cul and args.relnum == 0 and '%#CursorLineFold#' or '%#FoldColumn#'
   local level = foldinfo.level
 
-  if level == 0 then return string..(" "):rep(width).."%*" end
+  if level == 0 then
+    return string .. (' '):rep(width) .. '%*'
+  end
 
   local closed = foldinfo.lines > 0
   local first_level = level - width - (closed and 1 or 0) + 1
-  if first_level < 1 then first_level = 1 end
+  if first_level < 1 then
+    first_level = 1
+  end
 
   -- For each column, add a foldopen, foldclosed, foldsep or padding char
   local range = level < width and level or width
   for col = 1, range do
     if args.virtnum ~= 0 then
-      string = string..args.fold.sep
+      string = string .. args.fold.sep
     elseif closed and (col == level or col == width) then
-      string = string..args.fold.close
+      string = string .. args.fold.close
     elseif foldinfo.start == args.lnum and first_level + col > foldinfo.llevel then
-      string = string..args.fold.open
+      string = string .. args.fold.open
     else
-      string = string..args.fold.sep
+      string = string .. args.fold.sep
     end
   end
-  if range < width then string = string..(" "):rep(width - range) end
+  if range < width then
+    string = string .. (' '):rep(width - range)
+  end
 
-  return string.."%*"
+  return string .. '%*'
 end
 
 --- Return sign column in configured format.
 function M.signfunc(args, segment)
   local ss = segment.sign
   local wss = ss.wins[args.win]
-  if args.virtnum ~= 0 and not ss.wrap then return wss.empty.."%*" end
+  if args.virtnum ~= 0 and not ss.wrap then
+    return wss.empty .. '%*'
+  end
   local sss = wss.signs[args.lnum]
-  local nonhl = ss.fillcharhl or (args.cul and args.relnum == 0 and "%#CursorLineSign#") or "%#SignColumn#"
-  if type(ss.auto) == "string" and wss.padwidth == 0 then return nonhl..ss.auto.."%*" end
-  if not sss then return nonhl..wss.empty.."%*" end
-  local text = ""
+  local nonhl = ss.fillcharhl
+    or (args.cul and args.relnum == 0 and '%#CursorLineSign#')
+    or '%#SignColumn#'
+  if type(ss.auto) == 'string' and wss.padwidth == 0 then
+    return nonhl .. ss.auto .. '%*'
+  end
+  if not sss then
+    return nonhl .. wss.empty .. '%*'
+  end
+  local text = ''
   local signcount = #sss
   for i = 1, signcount do
     local s = sss[i]
@@ -96,7 +116,7 @@ end
 --- Create new fold by middle-clicking the range.
 local function create_fold(args)
   if foldmarker then
-    c("norm! zf"..foldmarker.."G")
+    c('norm! zf' .. foldmarker .. 'G')
     foldmarker = nil
   else
     foldmarker = args.mousepos.line
@@ -105,20 +125,22 @@ end
 
 local function fold_click(args, open, other)
   -- Create fold on middle click
-  if args.button == "m" then
+  if args.button == 'm' then
     create_fold(args)
-    if other then return end
+    if other then
+      return
+    end
   end
   foldmarker = nil
 
-  if args.button == "l" then -- Open/Close (recursive) fold on (clickmod)-click
+  if args.button == 'l' then -- Open/Close (recursive) fold on (clickmod)-click
     if open then
-      c("norm! z"..(args.mods:find(clickmod) and "O" or "o"))
+      c('norm! z' .. (args.mods:find(clickmod) and 'O' or 'o'))
     else
-      c("norm! z"..(args.mods:find(clickmod) and "C" or "c"))
+      c('norm! z' .. (args.mods:find(clickmod) and 'C' or 'c'))
     end
-  elseif args.button == "r" then -- Delete (recursive) fold on (clickmod)-right click
-    c("norm! z"..(args.mods:find(clickmod) and "D" or "d"))
+  elseif args.button == 'r' then -- Delete (recursive) fold on (clickmod)-right click
+    c('norm! z' .. (args.mods:find(clickmod) and 'D' or 'd'))
   end
 end
 
@@ -139,30 +161,32 @@ end
 
 --- Handler for clicking a Diagnostc* sign.
 function M.diagnostic_click(args)
-  if args.button == "l" then
-    d.open_float()      -- Open diagnostic float on left click
-  elseif args.button == "m" then
+  if args.button == 'l' then
+    d.open_float() -- Open diagnostic float on left click
+  elseif args.button == 'm' then
     l.buf.code_action() -- Open code action on middle click
   end
 end
 
 --- Handler for clicking a GitSigns* sign.
 function M.gitsigns_click(args)
-  if args.button == "l" then
-    require("gitsigns").preview_hunk()
-  elseif args.button == "m" then
-    require("gitsigns").reset_hunk()
-  elseif args.button == "r" then
-    require("gitsigns").stage_hunk()
+  if args.button == 'l' then
+    require('gitsigns').preview_hunk()
+  elseif args.button == 'm' then
+    require('gitsigns').reset_hunk()
+  elseif args.button == 'r' then
+    require('gitsigns').stage_hunk()
   end
 end
 
 --- Toggle a (conditional) DAP breakpoint.
 function M.toggle_breakpoint(args)
-  local dap = npc(require, "dap")
-  if not dap then return end
+  local dap = npc(require, 'dap')
+  if not dap then
+    return
+  end
   if args.mods:find(clickmod) then
-    vim.ui.input({prompt = "Breakpoint condition: "}, function(input)
+    vim.ui.input({ prompt = 'Breakpoint condition: ' }, function(input)
       dap.set_breakpoint(input)
     end)
   else
@@ -172,16 +196,16 @@ end
 
 --- Handler for clicking the line number.
 function M.lnum_click(args)
-  if args.button == "l" then
+  if args.button == 'l' then
     -- Toggle DAP (conditional) breakpoint on (clickmod)left click
     M.toggle_breakpoint(args)
-  elseif args.button == "m" then
-    c("norm! yy") -- Yank on middle click
-  elseif args.button == "r" then
+  elseif args.button == 'm' then
+    c('norm! yy') -- Yank on middle click
+  elseif args.button == 'r' then
     if args.clicks == 2 then
-      c("norm! dd") -- Cut on double right click
+      c('norm! dd') -- Cut on double right click
     else
-      c("norm! p")  -- Paste on right click
+      c('norm! p') -- Paste on right click
     end
   end
 end
@@ -190,7 +214,7 @@ function M.init(cfg)
   thou = cfg.thousands
   culright = cfg.relculright
   clickmod = cfg.clickmod
-  ffi = require("statuscol.ffidef")
+  ffi = require('statuscol.ffidef')
   C = ffi.C
 end
 

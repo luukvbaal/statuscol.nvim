@@ -1,4 +1,4 @@
-local ffi = require("ffi")
+local ffi = require('ffi')
 ffi.cdef([[
 	int next_namespace_id;
 	uint64_t display_tick;

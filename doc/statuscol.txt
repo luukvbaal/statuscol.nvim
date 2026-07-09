@@ -1,4 +1,5 @@
 *statuscol.txt*                  Status column plugin providing click handlers
+                                  For NVIM v0.8.0    Last change: 2026 July 09
 
 ==============================================================================
 Table of Contents                                *statuscol-table-of-contents*
@@ -97,6 +98,7 @@ can contain the following elements:
         fillchar = " ",      -- character used to fill a segment with less signs than maxwidth
         fillcharhl = nil,    -- highlight group used for fillchar (SignColumn/CursorLineSign if omitted)
         foldclosed = false,  -- when true, show signs from lines in a closed fold on the first line
+        align = "left",      -- "left"|"right": alignment when segment is partially filled
       }
     }
 <
@@ -132,7 +134,7 @@ can contain the following elements:
 
 The values stored in this table are only updated when necessary and are used in
 the builtin segments for performance reasons. For custom `text` and `condition`
-functions it is recommended to use them as well rather than e.g. accessing
+functions it is recommended to use them as well rather than e.g. accessing
 `vim.v.lnum` or `vim.api.nvim_get_option_value()` directly:
 
 >lua
